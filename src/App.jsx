@@ -37,10 +37,7 @@ function EspacoPrivado() {
   async function carregarAuxiliares(householdId) {
     const [{ data: accs }, { data: cats }, { data: regs }] = await Promise.all([
       supabase.from('accounts').select('*').eq('household_id', householdId),
-      supabase
-        .from('categories')
-        .select('*')
-        .or(`household_id.eq.${householdId},household_id.is.null`),
+      supabase.from('categories').select('*').eq('household_id', householdId),
       supabase.from('category_rules').select('*').eq('household_id', householdId),
     ])
     setContas(accs ?? [])
