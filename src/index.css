@@ -101,6 +101,14 @@ select {
   margin: 0 0 1.25rem;
 }
 
+.login-hero__marca {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(3rem, 7vw, 4.5rem);
+  line-height: 1;
+  margin: 0 0 1.5rem;
+}
+
 .login-hero__headline {
   font-family: var(--font-display);
   font-weight: 500;
@@ -109,10 +117,20 @@ select {
   margin: 0 0 2.5rem;
 }
 
-.login-hero__headline em {
+.login-hero__headline em,
+.login-hero__frase em {
   font-style: italic;
   font-weight: 500;
   color: var(--accent);
+}
+
+.login-hero__frase {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: #cbb9a5;
+  max-width: 22rem;
+  margin: 0;
 }
 
 .login-hero__sub {

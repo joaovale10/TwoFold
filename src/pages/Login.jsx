@@ -26,12 +26,10 @@ export default function Login() {
     <div className="login-page">
       <section className="login-hero" aria-hidden="true">
         <div className="login-hero__inner">
-          <p className="login-hero__eyebrow">TwoFold</p>
-          <h1 className="login-hero__headline">
-            O que é teu.
-            <br />O que é dele.
-            <br /><em>O que é vosso.</em>
-          </h1>
+          <h1 className="login-hero__marca">TwoFold</h1>
+          <p className="login-hero__frase">
+            O que é teu. O que é dele. <em>O que é vosso.</em>
+          </p>
 
           <p className="login-hero__sub">
             Cada um com o seu espaço. E um espaço só para os dois.
