@@ -70,7 +70,9 @@ export default function AceitarConvitePage() {
         <div className="login-hero__inner">
           <h1 className="login-hero__marca">TwoFold</h1>
           <p className="login-hero__frase">
-            O que é teu. O que é dele. <em>O que é vosso.</em>
+            O que é teu.
+            <br />O que é dele.
+            <br /><em>O que é vosso.</em>
           </p>
           <p className="login-hero__sub">Foste convidado a criar o teu próprio espaço.</p>
         </div>
