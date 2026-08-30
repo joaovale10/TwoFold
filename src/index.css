@@ -90,6 +90,7 @@ select {
 
 .login-hero__inner {
   max-width: 30rem;
+  text-align: center;
 }
 
 .login-hero__eyebrow {
@@ -106,6 +107,7 @@ select {
   font-weight: 600;
   font-size: clamp(2.4rem, 5.5vw, 3.5rem);
   line-height: 1;
+  color: var(--accent);
   margin: 0 0 1.5rem;
 }
 
@@ -130,11 +132,11 @@ select {
   line-height: 1.4;
   color: #cbb9a5;
   max-width: 22rem;
-  margin: 0;
+  margin: 0 auto;
 }
 
 .login-hero__sub {
-  margin: 2.5rem 0 0;
+  margin: 2.5rem auto 0;
   color: #cbb9a5;
   font-size: 1rem;
   max-width: 22rem;
