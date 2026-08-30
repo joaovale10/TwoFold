@@ -116,9 +116,7 @@ export default function CategoriesPage() {
   }
 
   const proprias = categorias.filter((c) => c.household_id === household.id)
-  const globais = categorias.filter((c) => c.household_id === null)
   const principaisProprias = proprias.filter((c) => !c.parent_id)
-  const principaisGlobais = globais.filter((c) => !c.parent_id)
   // categoria-mãe pode ser própria ou predefinida — as subcategorias criadas são sempre próprias
   const possiveisMae = categorias.filter((c) => !c.parent_id)
   const subDe = (paiId) => categorias.filter((c) => c.parent_id === paiId)
@@ -165,30 +163,6 @@ export default function CategoriesPage() {
             <CategoriaEditavel key={c.id} categoria={c} subcategorias={subDe(c.id)} atualizar={atualizar} />
           ))}
         </ul>
-      )}
-
-      {principaisGlobais.length > 0 && (
-        <>
-          <h2>Categorias predefinidas</h2>
-          <p className="login-form__lead">
-            Vieram já criadas com o teu espaço, como ponto de partida — edita-as livremente em
-            "As tuas categorias" acima.
-          </p>
-          <ul className="categoria-lista">
-            {principaisGlobais.map((c) => (
-              <li key={c.id}>
-                <span className="categoria-cor" style={{ background: c.cor }} /> {c.nome}
-                {subDe(c.id).length > 0 && (
-                  <ul className="categoria-lista categoria-lista--sub">
-                    {subDe(c.id).map((sub) => (
-                      <li key={sub.id}>{sub.nome}</li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
       )}
 
       <h2>Regras automáticas de categorização</h2>
