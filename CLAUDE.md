@@ -8,7 +8,7 @@ Toda a comunicação com o utilizador deve ser feita em **português de Portugal
 
 ## Estado do projeto
 
-App React + Vite + Supabase a compilar (`npm run build`/`npm run lint` a passar). Projeto Supabase já criado, `.env` preenchido. Login funcional, navegação lateral com Transações/Contas/Categorias/Despesas Fixas/Orçamentos. **Falta:** correr o `supabase/schema.sql` atual (mudou várias vezes — confirmar que a versão em produção tem `budgets.tipo`/`nome`, `fixed_expenses` e as policies de privacidade de `accounts`/`transactions`), seed do Vale e da Clara (ver fim do `schema.sql`), deploy no Vercel.
+App "TwoFold" (React + Vite + Supabase) em produção: `npm run build`/`npm run lint` a passar, deploy automático no Vercel a cada `git push` para `main` (repo público em github.com/joaovale10/TwoFold — ver `docs/CHANGELOG.md` para a política do que entra no repo), domínio `https://two-fold-woad.vercel.app`. Login, convites por email e todas as Fases 1-3 funcionais em produção. Instalável no iPhone via Safari → Partilhar → "Adicionar ao Ecrã Principal" (PWA).
 
 ## Objetivo do projeto
 
@@ -131,13 +131,12 @@ docs/
   superpowers/plans/            # planos de implementação gerados durante o desenvolvimento
 ```
 
-Fluxo de dados: `App.jsx` (`EspacoPrivado`) carrega o `household` do utilizador autenticado (via `household_members`) e as `accounts`/`categories`; passa tudo a `AppLayout`, que expõe via `useOutletContext()` a cada página filha. Não há mais fluxo de criação de household pela UI — se um utilizador autenticado não tiver `household_members`, mostra-se uma mensagem a pedir para contactar quem fez a configuração inicial (isto não deve acontecer em uso normal, só há 2 utilizadores e ambos são seedados por SQL). RLS cobre dois níveis: `is_household_member(household_id)` (todas as tabelas) e `can_access_account(account_id)` (só `accounts`/`transactions`, para a privacidade das contas pessoais).
+Fluxo de dados: `App.jsx` (`EspacoPrivado`) carrega o `household` do utilizador autenticado (via `household_members`) e as `accounts`/`categories`; passa tudo a `AppLayout`, que expõe via `useOutletContext()` a cada página filha. Um utilizador autenticado sem `household_members` (conta criada mas convite não resgatado, ou erro) vê um ecrã "Sem acesso a nenhum espaço" com botão de sair. RLS cobre dois níveis: `is_household_member(household_id)` (todas as tabelas) e `can_access_account(account_id)` (só `accounts`/`transactions`, para a privacidade das contas pessoais). Ver secção de Convites acima para como novos households (para além do Vale/Clara original) se criam sem SQL manual.
 
 ## Próximos passos (não feitos ainda)
 
-- Confirmar que `supabase/schema.sql` foi corrido na versão atual (mudou várias vezes — última alteração: `savings_goals`, `budgets` sem tipo `poupanca`) e correr o seeding do Vale/Clara.
-- Fases 3/4 do produto — ver `docs/roadmap.md`.
-- Deploy no Vercel.
+- Ver `docs/roadmap.md` — secção "Escalabilidade Pro" para ideias adiadas de propósito (ex. internacionalização).
+- Rodar a SMTP key do Brevo por precaução (o username ficou brevemente visível num screenshot já removido do repo público — ver `docs/CHANGELOG.md`).
 
 ## Como trabalhar neste projeto
 
