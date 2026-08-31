@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx'
 import AceitarConvitePage from './pages/AceitarConvitePage.jsx'
 import ConvitesPage from './pages/ConvitesPage.jsx'
 import ContaPage from './pages/ContaPage.jsx'
+import AjudaPage from './pages/AjudaPage.jsx'
 import AppLayout from './components/AppLayout.jsx'
 import SummaryPage from './pages/SummaryPage.jsx'
 import TransactionsPage from './pages/TransactionsPage.jsx'
@@ -110,6 +111,7 @@ export default function App() {
         <Route path="objetivos" element={<GoalsPage />} />
         <Route path="convites" element={<ConvitesPage />} />
         <Route path="conta" element={<ContaPage />} />
+        <Route path="ajuda" element={<AjudaPage />} />
       </Route>
     </Routes>
   )

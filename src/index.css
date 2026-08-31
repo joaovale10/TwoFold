@@ -311,9 +311,12 @@ select {
 
 .notificacoes__botao {
   position: relative;
+  display: inline-flex;
   background: none;
   border: none;
   font-size: 1.1rem;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
   padding: 0.2rem;
   line-height: 1;

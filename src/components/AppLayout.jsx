@@ -49,6 +49,9 @@ export default function AppLayout({ household, contas, categorias, regras, atual
         <div className="sidebar__topo">
           <p className="sidebar__marca">TwoFold</p>
           <div className="sidebar__acoes">
+            <Link to="/ajuda" className="notificacoes__botao" title="Como funciona a app">
+              ❓
+            </Link>
             <button type="button" className="notificacoes__botao" onClick={alternarTema} title="Alternar tema">
               {tema === 'dark' ? '☀️' : '🌙'}
             </button>
