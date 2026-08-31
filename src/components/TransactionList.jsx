@@ -82,6 +82,7 @@ export default function TransactionList({ transactions, categorias = [], contaEm
   if (transactions.length === 0) return <p>Ainda não há transações.</p>
 
   return (
+    <div className="transaction-list__wrap">
     <table className="transaction-list">
       <thead>
         <tr>
@@ -137,5 +138,6 @@ export default function TransactionList({ transactions, categorias = [], contaEm
         })}
       </tbody>
     </table>
+    </div>
   )
 }

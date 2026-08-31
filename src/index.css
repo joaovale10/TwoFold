@@ -668,6 +668,68 @@ select {
   font-family: var(--font-mono);
 }
 
+.transaction-list__wrap {
+  overflow-x: auto;
+}
+
+@media (max-width: 720px) {
+  .transaction-list {
+    font-size: 0.8rem;
+  }
+
+  .transaction-list th,
+  .transaction-list td {
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+.ajuda-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.ajuda-item {
+  background: var(--paper-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+}
+
+.ajuda-item[open] {
+  border-color: var(--accent);
+}
+
+.ajuda-item__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ajuda-item__cabecalho::-webkit-details-marker {
+  display: none;
+}
+
+.ajuda-item__icone {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.ajuda-item__titulo {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.ajuda-item__texto {
+  margin: 0.75rem 0 0;
+  padding-left: 2rem;
+  color: var(--ink);
+  opacity: 0.9;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Resumo                                                                   */
 /* ---------------------------------------------------------------------- */
