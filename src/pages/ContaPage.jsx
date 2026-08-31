@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
+import { forcarAtualizacao } from '../lib/pwa.js'
 
 export default function ContaPage() {
   const { household, atualizarHousehold } = useOutletContext()
@@ -136,6 +137,15 @@ export default function ContaPage() {
           </button>
         </div>
       </form>
+
+      <h2>Atualizações</h2>
+      <p className="login-form__lead">
+        Se instalaste a app no telemóvel e não vês as novidades mais recentes, força uma atualização
+        — limpa a versão guardada no telemóvel e recarrega a app.
+      </p>
+      <button type="button" className="botao-primario" onClick={forcarAtualizacao}>
+        Forçar atualização
+      </button>
     </div>
   )
 }
