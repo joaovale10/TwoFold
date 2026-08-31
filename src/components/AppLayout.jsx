@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 import NotificationsBell from './NotificationsBell.jsx'
@@ -79,7 +79,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
           )}
         </nav>
         <div className="sidebar__rodape">
-          <div className="sidebar__utilizador">
+          <Link to="/conta" className="sidebar__utilizador" title="A minha conta">
             <svg
               className="sidebar__utilizador-icone"
               viewBox="0 0 24 24"
@@ -91,7 +91,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
               <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5Z" />
             </svg>
             <span className="sidebar__utilizador-nome">{meuNome ?? user?.email?.split('@')[0]}</span>
-          </div>
+          </Link>
           <button type="button" className="botao-link" onClick={signOut}>
             Sair
           </button>

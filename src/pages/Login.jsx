@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Login() {
   const { session, signInWithPassword } = useAuth()
-  const [email, setEmail] = useState('')
+  const [identificador, setIdentificador] = useState('')
   const [password, setPassword] = useState('')
   const [erro, setErro] = useState(null)
   const [aEnviar, setAEnviar] = useState(false)
@@ -15,6 +16,17 @@ export default function Login() {
     e.preventDefault()
     setErro(null)
     setAEnviar(true)
+
+    let email = identificador.trim()
+    if (!email.includes('@')) {
+      const { data } = await supabase.rpc('email_de_username', { p_username: email })
+      if (!data) {
+        setAEnviar(false)
+        setErro('Credenciais inválidas.')
+        return
+      }
+      email = data
+    }
 
     const { error } = await signInWithPassword(email, password)
 
@@ -45,12 +57,12 @@ export default function Login() {
           <p className="login-form__lead">Entra para ver as contas do casal.</p>
 
           <label>
-            Email
+            Email ou username
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              type="text"
+              value={identificador}
+              onChange={(e) => setIdentificador(e.target.value)}
+              autoComplete="username"
               required
             />
           </label>

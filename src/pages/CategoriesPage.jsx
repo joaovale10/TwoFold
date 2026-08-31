@@ -125,34 +125,49 @@ export default function CategoriesPage() {
     <div>
       <h1>Categorias</h1>
 
-      <form onSubmit={submeter} className="transaction-form">
-        <input
-          placeholder="Nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          style={{ minWidth: '16rem' }}
-          required
-        />
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-          <option value="despesa">Despesa</option>
-          <option value="receita">Receita</option>
-        </select>
-        <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
-          <option value="">Categoria Principal</option>
-          {possiveisMae
-            .filter((c) => c.tipo === tipo)
-            .map((c) => (
-              <option key={c.id} value={c.id}>
-                Subcategoria de {c.nome}
-              </option>
-            ))}
-        </select>
-        <input type="color" value={cor} onChange={(e) => setCor(e.target.value)} />
-        <button type="submit" className="botao-primario">
-          Adicionar
-        </button>
+      <form onSubmit={submeter} className="nova-transacao">
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Nome
+            <input placeholder="Ex: Ginásio" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          </label>
+          <label>
+            Tipo
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Categoria-mãe
+            <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
+              <option value="">Categoria Principal</option>
+              {possiveisMae
+                .filter((c) => c.tipo === tipo)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    Subcategoria de {c.nome}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Cor
+            <input type="color" value={cor} onChange={(e) => setCor(e.target.value)} />
+          </label>
+        </div>
+
+        {erro && <p className="erro">{erro}</p>}
+
+        <div className="nova-transacao__acoes">
+          <button type="submit" className="botao-primario">
+            Adicionar
+          </button>
+        </div>
       </form>
-      {erro && <p className="erro">{erro}</p>}
 
       <h2>As tuas categorias</h2>
       {principaisProprias.length === 0 ? (
@@ -170,26 +185,38 @@ export default function CategoriesPage() {
         Quando a descrição de uma transação contiver o padrão, a categoria é sugerida automaticamente.
       </p>
 
-      <form onSubmit={submeterRegra} className="transaction-form">
-        <input
-          placeholder="Padrão no texto (ex: Mercadona)"
-          value={padraoRegra}
-          onChange={(e) => setPadraoRegra(e.target.value)}
-          required
-        />
-        <select value={categoriaRegra} onChange={(e) => setCategoriaRegra(e.target.value)} required>
-          <option value="">Categoria a sugerir</option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="botao-primario">
-          Adicionar regra
-        </button>
+      <form onSubmit={submeterRegra} className="nova-transacao">
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Padrão no texto
+            <input
+              placeholder="Ex: Mercadona"
+              value={padraoRegra}
+              onChange={(e) => setPadraoRegra(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Categoria a sugerir
+            <select value={categoriaRegra} onChange={(e) => setCategoriaRegra(e.target.value)} required>
+              <option value="">Escolher categoria</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {erroRegra && <p className="erro">{erroRegra}</p>}
+
+        <div className="nova-transacao__acoes">
+          <button type="submit" className="botao-primario">
+            Adicionar regra
+          </button>
+        </div>
       </form>
-      {erroRegra && <p className="erro">{erroRegra}</p>}
 
       {regras.length === 0 ? (
         <p>Ainda não há regras definidas.</p>

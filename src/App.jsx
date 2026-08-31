@@ -6,6 +6,7 @@ import { gerarTransacoesRecorrentes } from './lib/recorrentes.js'
 import Login from './pages/Login.jsx'
 import AceitarConvitePage from './pages/AceitarConvitePage.jsx'
 import ConvitesPage from './pages/ConvitesPage.jsx'
+import ContaPage from './pages/ContaPage.jsx'
 import AppLayout from './components/AppLayout.jsx'
 import SummaryPage from './pages/SummaryPage.jsx'
 import TransactionsPage from './pages/TransactionsPage.jsx'
@@ -108,6 +109,7 @@ export default function App() {
         <Route path="orcamentos/:tipo" element={<BudgetsPage />} />
         <Route path="objetivos" element={<GoalsPage />} />
         <Route path="convites" element={<ConvitesPage />} />
+        <Route path="conta" element={<ContaPage />} />
       </Route>
     </Routes>
   )

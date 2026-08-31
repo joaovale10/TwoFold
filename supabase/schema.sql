@@ -19,6 +19,7 @@ create table household_members (
   household_id uuid not null references households (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   nome text, -- nome próprio a mostrar na UI (ex: "Vale", "Clara")
+  username text unique, -- opcional, para entrar sem escrever o email (ver email_de_username)
   created_at timestamptz not null default now(),
   primary key (household_id, user_id)
 );
@@ -36,6 +37,24 @@ as $$
       and user_id = auth.uid()
   );
 $$;
+
+-- Resolve um username para o email da conta, para se poder entrar em
+-- /login com username em vez de email. security definer porque auth.users
+-- não é legível diretamente, e chamada por quem ainda não está autenticado.
+create or replace function email_de_username(p_username text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select u.email
+  from household_members hm
+  join auth.users u on u.id = hm.user_id
+  where hm.username = p_username
+  limit 1;
+$$;
+
+grant execute on function email_de_username(text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Accounts: contas casal (partilhadas) e contas pessoais (privadas do dono).
@@ -398,6 +417,11 @@ create policy "membros veem o seu household"
 create policy "membros veem os outros membros do seu household"
   on household_members for select
   using (is_household_member(household_id));
+
+create policy "membro edita a sua propria linha (nome/username)"
+  on household_members for update
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
 
 -- Sem policy de insert em households/household_members: só as funções
 -- security definer (admin_criar_espaco, convidar_parceiro, resgatar_convite)
