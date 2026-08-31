@@ -18,6 +18,12 @@ const SECCOES = [
       'Resumo do mês só das contas casal — quanto cada pessoa contribuiu, despesas conjuntas por categoria, taxa de poupança. Se o teu espaço ainda só tiver 1 pessoa, aparece aqui um botão para convidares o/a parceiro(a) por email.',
   },
   {
+    icone: '📩',
+    titulo: 'Convidar o/a parceiro(a)',
+    texto:
+      'Enquanto o teu espaço só tiver 1 pessoa, a página Casal mostra o cartão "Convidar parceiro(a)". Mete o email dele/dela e recebes um link (algo como .../convite/xxxxx) — copia e envia por WhatsApp, email, etc., a app não o envia por ti. A outra pessoa abre o link, cria a password e confirma o email; a partir daí fica automaticamente como o 2º membro do mesmo espaço, com acesso às contas casal e às suas próprias contas pessoais. O convite expira ao fim de 14 dias e cada espaço só pode ter 2 membros.',
+  },
+  {
     icone: '🏦',
     titulo: 'Contas',
     texto:
