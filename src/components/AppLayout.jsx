@@ -26,6 +26,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
   const { signOut, user } = useAuth()
   const [tema, setTema] = useState(obterTemaInicial)
   const [meuNome, setMeuNome] = useState(null)
+  const [sidebarAberta, setSidebarAberta] = useState(false)
 
   useEffect(() => {
     supabase
@@ -45,6 +46,15 @@ export default function AppLayout({ household, contas, categorias, regras, atual
 
   return (
     <div className="app-layout">
+      <button
+        type="button"
+        className="sidebar__hamburger"
+        onClick={() => setSidebarAberta(true)}
+        title="Abrir menu"
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
       <div className="app-canto-superior-direito">
         <Link to="/ajuda" className="notificacoes__botao" title="Como funciona a app">
           ❓
@@ -54,11 +64,23 @@ export default function AppLayout({ household, contas, categorias, regras, atual
         </button>
         <NotificationsBell householdId={household.id} />
       </div>
-      <aside className="sidebar">
+      {sidebarAberta && (
+        <div className="sidebar__backdrop" onClick={() => setSidebarAberta(false)} />
+      )}
+      <aside className={sidebarAberta ? 'sidebar aberta' : 'sidebar'}>
         <div className="sidebar__topo">
           <p className="sidebar__marca">TwoFold</p>
+          <button
+            type="button"
+            className="sidebar__fechar"
+            onClick={() => setSidebarAberta(false)}
+            title="Fechar menu"
+            aria-label="Fechar menu"
+          >
+            ✕
+          </button>
         </div>
-        <nav>
+        <nav onClick={() => setSidebarAberta(false)}>
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
               {link.label}
@@ -82,7 +104,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
           )}
         </nav>
         <div className="sidebar__rodape">
-          <Link to="/conta" className="sidebar__utilizador" title="A minha conta">
+          <Link to="/conta" className="sidebar__utilizador" title="A minha conta" onClick={() => setSidebarAberta(false)}>
             <svg
               className="sidebar__utilizador-icone"
               viewBox="0 0 24 24"
