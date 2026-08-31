@@ -261,6 +261,17 @@ select {
   gap: 0.5rem;
 }
 
+.app-canto-superior-direito {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.5rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: var(--ink);
+}
+
 .sidebar__marca {
   font-family: var(--font-display);
   font-size: 1.5rem;
@@ -447,6 +458,11 @@ select {
 
   .sidebar__rodape {
     flex-direction: row;
+  }
+
+  .app-canto-superior-direito {
+    top: 4.5rem;
+    right: 1rem;
   }
 
   .app-content {

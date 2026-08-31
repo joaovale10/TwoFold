@@ -45,18 +45,18 @@ export default function AppLayout({ household, contas, categorias, regras, atual
 
   return (
     <div className="app-layout">
+      <div className="app-canto-superior-direito">
+        <Link to="/ajuda" className="notificacoes__botao" title="Como funciona a app">
+          ❓
+        </Link>
+        <button type="button" className="notificacoes__botao" onClick={alternarTema} title="Alternar tema">
+          {tema === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <NotificationsBell householdId={household.id} />
+      </div>
       <aside className="sidebar">
         <div className="sidebar__topo">
           <p className="sidebar__marca">TwoFold</p>
-          <div className="sidebar__acoes">
-            <Link to="/ajuda" className="notificacoes__botao" title="Como funciona a app">
-              ❓
-            </Link>
-            <button type="button" className="notificacoes__botao" onClick={alternarTema} title="Alternar tema">
-              {tema === 'dark' ? '☀️' : '🌙'}
-            </button>
-            <NotificationsBell householdId={household.id} />
-          </div>
         </div>
         <nav>
           {LINKS.map((link) => (
