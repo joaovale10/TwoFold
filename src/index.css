@@ -264,7 +264,7 @@ select {
 
 .app-canto-superior-direito {
   position: absolute;
-  top: 1.25rem;
+  top: calc(1.25rem + env(safe-area-inset-top, 0px));
   right: 1.5rem;
   z-index: 20;
   display: flex;
@@ -276,7 +276,7 @@ select {
 .sidebar__hamburger {
   display: none;
   position: absolute;
-  top: 1.25rem;
+  top: calc(1.25rem + env(safe-area-inset-top, 0px));
   left: 1rem;
   z-index: 20;
   background: none;
@@ -482,6 +482,7 @@ select {
     width: 78vw;
     max-width: 280px;
     z-index: 30;
+    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.25);
@@ -501,13 +502,13 @@ select {
   }
 
   .app-canto-superior-direito {
-    top: 1.25rem;
+    top: calc(1.25rem + env(safe-area-inset-top, 0px));
     right: 1rem;
   }
 
   .app-content {
     padding: 1.25rem;
-    padding-top: 4rem;
+    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
   }
 }
 
