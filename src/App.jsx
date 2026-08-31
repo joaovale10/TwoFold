@@ -90,6 +90,7 @@ function EspacoPrivado() {
       categorias={categorias}
       regras={regras}
       atualizar={() => carregarAuxiliares(household.id)}
+      atualizarHousehold={carregarHousehold}
     />
   )
 }

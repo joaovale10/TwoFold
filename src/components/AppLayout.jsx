@@ -22,7 +22,7 @@ const ORCAMENTO_LINKS = [
 
 const EMAIL_ADMIN = 'joao.projects.vale@gmail.com'
 
-export default function AppLayout({ household, contas, categorias, regras, atualizar }) {
+export default function AppLayout({ household, contas, categorias, regras, atualizar, atualizarHousehold }) {
   const { signOut, user } = useAuth()
   const [tema, setTema] = useState(obterTemaInicial)
   const [meuNome, setMeuNome] = useState(null)
@@ -101,7 +101,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
         </div>
       </aside>
       <main className="app-content">
-        <Outlet context={{ household, contas, categorias, regras, atualizar }} />
+        <Outlet context={{ household, contas, categorias, regras, atualizar, atualizarHousehold }} />
       </main>
     </div>
   )

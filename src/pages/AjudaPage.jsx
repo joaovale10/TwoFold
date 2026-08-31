@@ -42,7 +42,7 @@ const SECCOES = [
   {
     titulo: 'A minha conta',
     texto:
-      'Clica no teu nome, no fundo da sidebar, para definires o teu nome de exibição e, opcionalmente, um username — depois podes entrar com ele em vez do email.',
+      'Clica no teu nome, no fundo da sidebar, para definires o teu nome de exibição, um username opcional (para entrares com ele em vez do email) e o nome do teu espaço — útil se hoje és só tu e mais tarde passares a partilhar com alguém.',
   },
 ]
 

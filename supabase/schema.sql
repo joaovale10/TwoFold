@@ -414,6 +414,11 @@ create policy "membros veem o seu household"
   on households for select
   using (is_household_member(id));
 
+create policy "membros editam o nome do seu household"
+  on households for update
+  using (is_household_member(id))
+  with check (is_household_member(id));
+
 create policy "membros veem os outros membros do seu household"
   on household_members for select
   using (is_household_member(household_id));

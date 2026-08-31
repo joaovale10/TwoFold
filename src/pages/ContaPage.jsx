@@ -4,13 +4,17 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 
 export default function ContaPage() {
-  const { household } = useOutletContext()
+  const { household, atualizarHousehold } = useOutletContext()
   const { user } = useAuth()
   const [nome, setNome] = useState('')
   const [username, setUsername] = useState('')
   const [erro, setErro] = useState(null)
   const [sucesso, setSucesso] = useState(false)
   const [aCarregar, setACarregar] = useState(true)
+
+  const [nomeEspaco, setNomeEspaco] = useState(household.nome)
+  const [erroEspaco, setErroEspaco] = useState(null)
+  const [sucessoEspaco, setSucessoEspaco] = useState(false)
 
   useEffect(() => {
     supabase
@@ -49,6 +53,22 @@ export default function ContaPage() {
     setSucesso(true)
   }
 
+  async function guardarEspaco(e) {
+    e.preventDefault()
+    setErroEspaco(null)
+    setSucessoEspaco(false)
+
+    const { error } = await supabase.from('households').update({ nome: nomeEspaco }).eq('id', household.id)
+
+    if (error) {
+      setErroEspaco(error.message)
+      return
+    }
+
+    setSucessoEspaco(true)
+    atualizarHousehold?.()
+  }
+
   if (aCarregar) return <p>A carregar...</p>
 
   return (
@@ -80,6 +100,35 @@ export default function ContaPage() {
 
         {erro && <p className="erro">{erro}</p>}
         {sucesso && <p className="login-form__lead">Guardado.</p>}
+
+        <div className="nova-transacao__acoes">
+          <button type="submit" className="botao-primario">
+            Guardar
+          </button>
+        </div>
+      </form>
+
+      <h2>O teu espaço</h2>
+      <p className="login-form__lead">
+        Se hoje partilhas este espaço com mais alguém, ou vieres a partilhar, o nome ajuda a
+        identificá-lo (ex: "Vale & Clara").
+      </p>
+
+      <form onSubmit={guardarEspaco} className="nova-transacao">
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Nome do espaço
+            <input
+              value={nomeEspaco}
+              onChange={(e) => setNomeEspaco(e.target.value)}
+              placeholder="Ex: Vale & Clara"
+              required
+            />
+          </label>
+        </div>
+
+        {erroEspaco && <p className="erro">{erroEspaco}</p>}
+        {sucessoEspaco && <p className="login-form__lead">Guardado.</p>}
 
         <div className="nova-transacao__acoes">
           <button type="submit" className="botao-primario">
