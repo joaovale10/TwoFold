@@ -438,6 +438,10 @@ create policy "admin vê todos os convites, membros veem os do seu espaço"
   on household_invites for select
   using (is_admin() or is_household_member(household_id));
 
+create policy "admin remove convites"
+  on household_invites for delete
+  using (is_admin());
+
 create policy "membros veem a conta casal e as suas próprias contas"
   on accounts for all
   using (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()))

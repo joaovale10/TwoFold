@@ -58,6 +58,9 @@ export default function CouplePage() {
   const { household, contas, categorias } = useOutletContext()
   const [transacoesCasal, setTransacoesCasal] = useState([])
   const [membros, setMembros] = useState([])
+  const [periodo, setPeriodo] = useState('mes-atual') // 'mes-atual' | 'tudo' | 'intervalo'
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
 
   const contasCasalIds = contas.filter((c) => c.tipo === 'casal').map((c) => c.id)
 
@@ -87,7 +90,14 @@ export default function CouplePage() {
   }, [household.id, contas])
 
   const hoje = new Date()
-  const doMes = transacoesCasal.filter((tx) => dentroDoMes(tx.data, hoje))
+
+  function emPeriodo(dataISO) {
+    if (periodo === 'tudo') return true
+    if (periodo === 'mes-atual') return dentroDoMes(dataISO, hoje)
+    return (!dataInicio || dataISO >= dataInicio) && (!dataFim || dataISO <= dataFim)
+  }
+
+  const doMes = transacoesCasal.filter((tx) => emPeriodo(tx.data))
   const receitas = doMes.filter((tx) => tx.tipo === 'receita').reduce((t, tx) => t + Number(tx.valor), 0)
   const despesas = doMes.filter((tx) => tx.tipo === 'despesa').reduce((t, tx) => t + Number(tx.valor), 0)
   const poupanca = receitas - despesas
@@ -136,11 +146,17 @@ export default function CouplePage() {
   const diferencaMedia = taxaPoupancaMes - mediaTaxa6Meses
 
   const nomeMes = hoje.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+  const rotuloPeriodo =
+    periodo === 'mes-atual'
+      ? nomeMes
+      : periodo === 'tudo'
+        ? 'Todo o histórico'
+        : `${dataInicio || '...'} a ${dataFim || '...'}`
 
   if (contasCasalIds.length === 0) {
     return (
       <div>
-        <h1>Casal</h1>
+        <h1 className="titulo-centrado">Casal</h1>
         <p>Ainda não existe nenhuma conta casal. Cria uma em "Contas".</p>
         {membros.length < 2 && <ConvidarParceiro onConvidado={carregarMembros} />}
       </div>
@@ -149,20 +165,55 @@ export default function CouplePage() {
 
   return (
     <div>
-      <h1>Casal</h1>
+      <div className="resumo-cabecalho">
+        <h1>Casal</h1>
+        <div className="tipo-toggle">
+          <button
+            type="button"
+            className={periodo === 'mes-atual' ? 'ativo' : ''}
+            onClick={() => setPeriodo('mes-atual')}
+          >
+            Mês atual
+          </button>
+          <button type="button" className={periodo === 'tudo' ? 'ativo' : ''} onClick={() => setPeriodo('tudo')}>
+            Tudo
+          </button>
+          <button
+            type="button"
+            className={periodo === 'intervalo' ? 'ativo' : ''}
+            onClick={() => setPeriodo('intervalo')}
+          >
+            Intervalo
+          </button>
+        </div>
+      </div>
+
       <p className="login-form__lead" style={{ textTransform: 'capitalize' }}>
-        {nomeMes} · finanças conjuntas
+        · {rotuloPeriodo} ·
       </p>
+
+      {periodo === 'intervalo' && (
+        <div className="filtro-datas">
+          <label>
+            De
+            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          </label>
+          <label>
+            Até
+            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          </label>
+        </div>
+      )}
 
       {membros.length < 2 && <ConvidarParceiro onConvidado={carregarMembros} />}
 
       <div className="resumo-grelha">
         <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Receitas</p>
+          <p className="resumo-cartao__label">Receitas no período</p>
           <p className="resumo-cartao__valor">{receitas.toFixed(2)} €</p>
         </div>
         <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Despesas</p>
+          <p className="resumo-cartao__label">Despesas no período</p>
           <p className="resumo-cartao__valor">{despesas.toFixed(2)} €</p>
         </div>
         <div className="resumo-cartao resumo-cartao--destaque">
@@ -175,7 +226,7 @@ export default function CouplePage() {
         <div className="resumo-cartao">
           <p className="resumo-cartao__label">Contribuições</p>
           {linhasContribuicoes.length === 0 ? (
-            <p>Sem receitas conjuntas este mês.</p>
+            <p>Sem receitas conjuntas neste período.</p>
           ) : (
             <ul className="resumo-lista-categorias">
               {linhasContribuicoes.map((c) => (
@@ -193,7 +244,7 @@ export default function CouplePage() {
         <div className="resumo-cartao">
           <p className="resumo-cartao__label">Despesas conjuntas por categoria</p>
           {linhasCategorias.length === 0 ? (
-            <p>Sem despesas conjuntas este mês.</p>
+            <p>Sem despesas conjuntas neste período.</p>
           ) : (
             <>
               <CategoryPieChart dados={dadosGrafico} />

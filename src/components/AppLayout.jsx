@@ -7,6 +7,7 @@ import { aplicarTema, obterTemaInicial } from '../lib/theme.js'
 
 const LINKS = [
   { to: '/resumo', label: 'Resumo' },
+  { to: '/stats', label: 'Stats' },
   { to: '/transacoes', label: 'Transações' },
   { to: '/casal', label: 'Casal' },
   { to: '/contas', label: 'Contas' },

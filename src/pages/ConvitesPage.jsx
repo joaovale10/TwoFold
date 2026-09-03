@@ -62,9 +62,15 @@ export default function ConvitesPage() {
     setTimeout(() => setLinkCopiado(null), 2000)
   }
 
+  async function removerConvite(id) {
+    if (!window.confirm('Remover este convite?')) return
+    await supabase.from('household_invites').delete().eq('id', id)
+    carregar()
+  }
+
   return (
     <div>
-      <h1>Convites</h1>
+      <h1 className="titulo-centrado">Convites</h1>
       <p className="login-form__lead">
         Cria um espaço novo com o email da primeira pessoa (serve para um amigo solteiro ou para o
         1º membro de um casal). Cada convite só pode ser resgatado por esse email e expira ao fim
@@ -124,6 +130,9 @@ export default function ConvitesPage() {
                         {linkCopiado === c.codigo ? 'Copiado!' : 'Copiar link'}
                       </button>
                     )}
+                    <button type="button" className="botao-link" onClick={() => removerConvite(c.id)}>
+                      Remover
+                    </button>
                   </td>
                 </tr>
               )

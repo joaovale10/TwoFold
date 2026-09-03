@@ -156,3 +156,13 @@ Atua como especialista em desenvolvimento web full-stack, engenharia de dados e 
 ### Registo de alterações
 
 Sempre que se implementa ou altera algo de relevante no código (feature, refactor, bugfix), acrescentar uma entrada no topo de `docs/CHANGELOG.md` a resumir o que foi feito e porquê — não é um diff, é para se perceber rapidamente o histórico sem reler código ou sessões antigas. Isto é uma exceção deliberada à regra acima de "não criar documentação não pedida": este ficheiro específico deve ser mantido sempre atualizado, por pedido explícito do utilizador.
+
+### Gestão de Sessão (Lembrete para o Utilizador e IA)
+* Sempre que o uso de ferramentas MCP (como leitura de browser) terminar, a sessão deve ser otimizada com o comando `/compact`.
+* Se uma tarefa independente for concluída, limpa o histórico com `/clear` para redefinir os tokens da sessão.
+
+## 1. Regras de Resposta e Poupança de Tokens
+* **Respostas Concisas:** Vai direto ao assunto. Evita explicações teóricas longas sobre conceitos de React, a menos que seja explicitamente solicitado.
+* **Exibição de Código:** Mostra apenas as linhas modificadas ou o bloco de código relevante. Nunca reescrevas um ficheiro inteiro se apenas alteraste duas linhas.
+* **Leitura Cirúrgica:** Não leias ficheiros em massa. Solicita ou lê apenas os ficheiros diretamente envolvidos na tarefa atual.
+* **Comandos Limpos:** Ao correr testes ou scripts, filtra o output. Se houver erros, analisa apenas o trecho da stack trace relevante.

@@ -123,7 +123,7 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      <h1>Categorias</h1>
+      <h1 className="titulo-centrado">Categorias</h1>
 
       <form onSubmit={submeter} className="nova-transacao">
         <div className="nova-transacao__linha nova-transacao__linha--2">

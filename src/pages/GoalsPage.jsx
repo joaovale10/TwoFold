@@ -99,47 +99,65 @@ export default function GoalsPage() {
 
   return (
     <div>
-      <h1>Objetivos</h1>
+      <h1 className="titulo-centrado">Objetivos</h1>
 
-      <form onSubmit={submeter} className="transaction-form">
-        <input
-          placeholder="Nome (ex: Férias, Casa)"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          required
-        />
-        <select value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
-          {contasAtivas.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nome}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="Objetivo (€)"
-          value={valorObjetivo}
-          onChange={(e) => setValorObjetivo(e.target.value)}
-          required
-        />
-        <input
-          type="date"
-          value={dataLimite}
-          onChange={(e) => setDataLimite(e.target.value)}
-          title="Data limite (opcional)"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Poupança mensal pretendida (opcional)"
-          value={contribuicaoMensal}
-          onChange={(e) => setContribuicaoMensal(e.target.value)}
-        />
-        <button type="submit" className="botao-primario">
-          Adicionar
-        </button>
+      <form onSubmit={submeter} className="nova-transacao">
+        <div className="nova-transacao__linha nova-transacao__linha--3">
+          <label>
+            Nome
+            <input
+              placeholder="Ex: Férias, Casa"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Conta
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
+              {contasAtivas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Objetivo (€)
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0,00 €"
+              value={valorObjetivo}
+              onChange={(e) => setValorObjetivo(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Data limite (opcional)
+            <input type="date" value={dataLimite} onChange={(e) => setDataLimite(e.target.value)} />
+          </label>
+          <label>
+            Poupança mensal pretendida (opcional)
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0,00 €"
+              value={contribuicaoMensal}
+              onChange={(e) => setContribuicaoMensal(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="nova-transacao__acoes">
+          <button type="submit" className="botao-primario">
+            + Adicionar objetivo
+          </button>
+        </div>
       </form>
       {erro && <p className="erro">{erro}</p>}
 

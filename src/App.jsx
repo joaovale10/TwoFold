@@ -17,6 +17,7 @@ import CategoriesPage from './pages/CategoriesPage.jsx'
 import FixedExpensesPage from './pages/FixedExpensesPage.jsx'
 import BudgetsPage from './pages/BudgetsPage.jsx'
 import GoalsPage from './pages/GoalsPage.jsx'
+import StatsPage from './pages/StatsPage.jsx'
 
 function EspacoPrivado() {
   const { user, session, loading, signOut } = useAuth()
@@ -103,6 +104,7 @@ export default function App() {
       <Route path="/" element={<EspacoPrivado />}>
         <Route index element={<Navigate to="/resumo" replace />} />
         <Route path="resumo" element={<SummaryPage />} />
+        <Route path="stats" element={<StatsPage />} />
         <Route path="transacoes" element={<TransactionsPage />} />
         <Route path="casal" element={<CouplePage />} />
         <Route path="contas" element={<AccountsPage />} />

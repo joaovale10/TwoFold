@@ -79,7 +79,7 @@ export default function TransactionsPage() {
 
   return (
     <div>
-      <h1>Transações</h1>
+      <h1 className="titulo-centrado">Transações</h1>
       <p className="saldo">Saldo da conta: {saldo.toFixed(2)} €</p>
 
       <TransactionForm

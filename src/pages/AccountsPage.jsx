@@ -49,7 +49,7 @@ export default function AccountsPage() {
 
   return (
     <div>
-      <h1>Contas</h1>
+      <h1 className="titulo-centrado">Contas</h1>
       <p className="login-form__lead">
         As tuas contas pessoais só são visíveis a ti. As contas casal são partilhadas com o/a parceiro/a.
       </p>

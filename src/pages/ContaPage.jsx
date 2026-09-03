@@ -74,7 +74,7 @@ export default function ContaPage() {
 
   return (
     <div>
-      <h1>A minha conta</h1>
+      <h1 className="titulo-centrado">A minha conta</h1>
       <p className="login-form__lead">
         Email: <strong>{user.email}</strong>
       </p>

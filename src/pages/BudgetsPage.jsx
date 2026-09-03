@@ -72,7 +72,7 @@ export default function BudgetsPage() {
 
   return (
     <div>
-      <h1>{titulo}</h1>
+      <h1 className="titulo-centrado">{titulo}</h1>
 
       <form onSubmit={submeter} className="transaction-form">
         <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>

@@ -461,6 +461,10 @@ select {
   font-weight: 500;
 }
 
+.app-content h1.titulo-centrado {
+  text-align: center;
+}
+
 @media (max-width: 720px) {
   .app-layout {
     grid-template-columns: 1fr;
@@ -585,6 +589,25 @@ select {
   color: var(--ink);
   font-family: inherit;
   font-size: 0.95rem;
+}
+
+input[type='color'] {
+  padding: 0.2rem;
+  width: 3.2rem;
+  height: 2.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type='color']::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
 }
 
 .nova-transacao__acoes {
@@ -834,6 +857,33 @@ select {
   .resumo-duas-colunas {
     grid-template-columns: 1fr;
   }
+}
+
+.stats-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.stats-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.stats-lista li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stats-lista__valores {
+  text-align: right;
+  font-family: var(--font-mono);
 }
 
 /* ---------------------------------------------------------------------- */

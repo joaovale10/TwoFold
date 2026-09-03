@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 import { dentroDoMes } from '../lib/datas.js'
 import { saldoDaConta } from '../lib/saldo.js'
-import CategoryPieChart from '../components/CategoryPieChart.jsx'
+import CategoryBarChart from '../components/CategoryBarChart.jsx'
 
 export default function SummaryPage() {
   const { household, contas, categorias } = useOutletContext()
@@ -169,8 +169,9 @@ export default function SummaryPage() {
 
   return (
     <div>
+      <h1 className="titulo-centrado">Resumo</h1>
+
       <div className="resumo-cabecalho">
-        <h1>Resumo</h1>
         <div className="tipo-toggle">
           <button type="button" className={ambito === 'tudo' ? 'ativo' : ''} onClick={() => setAmbito('tudo')}>
             Tudo
@@ -186,12 +187,6 @@ export default function SummaryPage() {
             Casal
           </button>
         </div>
-      </div>
-
-      <div className="resumo-cabecalho">
-        <p className="login-form__lead" style={{ textTransform: 'capitalize', margin: 0 }}>
-          {rotuloPeriodo}
-        </p>
         <div className="tipo-toggle">
           <button
             type="button"
@@ -212,6 +207,10 @@ export default function SummaryPage() {
           </button>
         </div>
       </div>
+
+      <p className="login-form__lead" style={{ textTransform: 'capitalize', textAlign: 'center' }}>
+        {rotuloPeriodo}
+      </p>
 
       {periodo === 'intervalo' && (
         <div className="filtro-datas">
@@ -261,73 +260,35 @@ export default function SummaryPage() {
         </div>
       </div>
 
+      <div className="resumo-cartao">
+        <p className="resumo-cartao__label">Despesas no período por categoria</p>
+        {linhasCategorias.length === 0 ? (
+          <p>Sem despesas neste período.</p>
+        ) : (
+          <CategoryBarChart dados={dadosGrafico} />
+        )}
+      </div>
+
       <div className="resumo-duas-colunas">
-        <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Despesas no período por categoria</p>
-          {linhasCategorias.length === 0 ? (
-            <p>Sem despesas neste período.</p>
-          ) : (
-            <>
-              <CategoryPieChart dados={dadosGrafico} />
-              <ul className="resumo-lista-categorias">
-                {linhasCategorias.map(({ categoria, valor }) => (
-                  <li key={categoria?.id ?? 'sem-categoria'}>
-                    <span>
-                      <span className="categoria-cor" style={{ background: categoria?.cor ?? '#999' }} />{' '}
-                      {categoria?.nome ?? 'Sem categoria'}
-                    </span>
-                    <span>{valor.toFixed(2)} €</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+        {insights.length > 0 && (
+          <div className="resumo-cartao">
+            <p className="resumo-cartao__label">Insights</p>
+            <ul className="resumo-insights">
+              {insights.map((texto, i) => (
+                <li key={i}>{texto}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Orçamento deste mês</p>
-          {orcamentoMensalTotal === 0 ? (
-            <p>Ainda não definiste orçamentos mensais.</p>
-          ) : (
-            <>
-              <p className="budget-item__cabecalho">
-                <span>
-                  {totaisMesAtual.despesas.toFixed(2)} € / {orcamentoMensalTotal.toFixed(2)} €
-                </span>
-              </p>
-              <div className="budget-item__barra">
-                <div
-                  className="budget-item__progresso"
-                  style={{
-                    width: `${Math.min(100, Math.round((totaisMesAtual.despesas / orcamentoMensalTotal) * 100))}%`,
-                    background: totaisMesAtual.despesas >= orcamentoMensalTotal ? 'var(--danger)' : 'var(--accent)',
-                  }}
-                />
-              </div>
-              <p className="login-form__lead">Resta {(orcamentoMensalTotal - totaisMesAtual.despesas).toFixed(2)} €</p>
-            </>
-          )}
+        <div className="resumo-cartao resumo-cartao--destaque">
+          <p className="resumo-cartao__label">Disponível para gastar</p>
+          <p className="resumo-cartao__valor">{disponivel.toFixed(2)} €</p>
+          <p className="login-form__lead">
+            Até ao fim do mês · {limiteDiario.toFixed(2)} € / dia
+          </p>
         </div>
       </div>
-
-      <div className="resumo-cartao resumo-cartao--destaque">
-        <p className="resumo-cartao__label">Disponível para gastar</p>
-        <p className="resumo-cartao__valor">{disponivel.toFixed(2)} €</p>
-        <p className="login-form__lead">
-          Até ao fim do mês · {limiteDiario.toFixed(2)} € / dia
-        </p>
-      </div>
-
-      {insights.length > 0 && (
-        <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Insights</p>
-          <ul className="resumo-insights">
-            {insights.map((texto, i) => (
-              <li key={i}>{texto}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div className="resumo-cartao">
         <p className="resumo-cartao__label">Próximos movimentos</p>
@@ -342,6 +303,31 @@ export default function SummaryPage() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div className="resumo-cartao">
+        <p className="resumo-cartao__label">Orçamento deste mês</p>
+        {orcamentoMensalTotal === 0 ? (
+          <p>Ainda não definiste orçamentos mensais.</p>
+        ) : (
+          <>
+            <p className="budget-item__cabecalho">
+              <span>
+                {totaisMesAtual.despesas.toFixed(2)} € / {orcamentoMensalTotal.toFixed(2)} €
+              </span>
+            </p>
+            <div className="budget-item__barra">
+              <div
+                className="budget-item__progresso"
+                style={{
+                  width: `${Math.min(100, Math.round((totaisMesAtual.despesas / orcamentoMensalTotal) * 100))}%`,
+                  background: totaisMesAtual.despesas >= orcamentoMensalTotal ? 'var(--danger)' : 'var(--accent)',
+                }}
+              />
+            </div>
+            <p className="login-form__lead">Resta {(orcamentoMensalTotal - totaisMesAtual.despesas).toFixed(2)} €</p>
+          </>
         )}
       </div>
     </div>

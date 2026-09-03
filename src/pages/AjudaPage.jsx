@@ -64,7 +64,7 @@ const SECCOES = [
 export default function AjudaPage() {
   return (
     <div>
-      <h1>Como funciona a TwoFold</h1>
+      <h1 className="titulo-centrado">Como funciona a TwoFold</h1>
       <p className="login-form__lead">Toca numa secção para abrir. Um resumo rápido — não precisas de mais nada para começar.</p>
 
       <div className="ajuda-lista">

@@ -108,7 +108,7 @@ export default function FixedExpensesPage() {
 
   return (
     <div>
-      <h1>Despesas Fixas</h1>
+      <h1 className="titulo-centrado">Despesas Fixas</h1>
       <p className="saldo">Total mensal: {totalMensal.toFixed(2)} €</p>
       <p className="login-form__lead">
         Ao abrires a app, as transações reais em falta até hoje são criadas automaticamente na conta escolhida.
