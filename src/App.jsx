@@ -5,6 +5,7 @@ import { supabase } from './lib/supabaseClient'
 import { gerarTransacoesRecorrentes } from './lib/recorrentes.js'
 import Login from './pages/Login.jsx'
 import AceitarConvitePage from './pages/AceitarConvitePage.jsx'
+import RedefinirPasswordPage from './pages/RedefinirPasswordPage.jsx'
 import ConvitesPage from './pages/ConvitesPage.jsx'
 import ContaPage from './pages/ContaPage.jsx'
 import AjudaPage from './pages/AjudaPage.jsx'
@@ -101,6 +102,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/convite/:codigo" element={<AceitarConvitePage />} />
+      <Route path="/redefinir-password" element={<RedefinirPasswordPage />} />
       <Route path="/" element={<EspacoPrivado />}>
         <Route index element={<Navigate to="/resumo" replace />} />
         <Route path="resumo" element={<SummaryPage />} />

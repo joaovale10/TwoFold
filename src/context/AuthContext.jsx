@@ -28,6 +28,9 @@ export function AuthProvider({ children }) {
       supabase.auth.signInWithPassword({ email, password }),
     signUp: (email, password, options) => supabase.auth.signUp({ email, password, options }),
     signOut: () => supabase.auth.signOut(),
+    resetPasswordForEmail: (email, redirectTo) =>
+      supabase.auth.resetPasswordForEmail(email, { redirectTo }),
+    updateUser: (attrs) => supabase.auth.updateUser(attrs),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
