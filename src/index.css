@@ -753,11 +753,18 @@ input[type='color']::-webkit-color-swatch {
   font-size: 1.05rem;
 }
 
-.ajuda-item__texto {
+.ajuda-item__lista {
   margin: 0.75rem 0 0;
-  padding-left: 2rem;
+  padding-left: 2.6rem;
   color: var(--ink);
   opacity: 0.9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ajuda-item__lista li {
+  list-style: disc;
 }
 
 /* ---------------------------------------------------------------------- */
