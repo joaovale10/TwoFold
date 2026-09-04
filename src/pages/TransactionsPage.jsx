@@ -44,6 +44,22 @@ export default function TransactionsPage() {
     setTransactions(data ?? [])
   }
 
+  // Histórico completo (sem filtro de data/pesquisa nem limite de 50), só para o cálculo
+  // do saldo real da conta — a tabela usa `transactions`, que pode estar filtrada/limitada.
+  async function carregarHistoricoSaldo() {
+    const { data } = await supabase
+      .from('transactions')
+      .select('account_id, conta_destino_id, tipo, valor')
+      .eq('household_id', household.id)
+      .is('apagada_em', null)
+
+    setTodasTransacoes(data ?? [])
+  }
+
+  async function atualizarTudo() {
+    await Promise.all([carregarTransacoes(), carregarHistoricoSaldo()])
+  }
+
   async function carregarApagadas() {
     const { data } = await supabase
       .from('transactions')
@@ -62,7 +78,7 @@ export default function TransactionsPage() {
     const { error } = await supabase.from('transactions').update({ apagada_em: null }).eq('id', id)
     if (error) return
 
-    await Promise.all([carregarTransacoes(), carregarApagadas()])
+    await Promise.all([atualizarTudo(), carregarApagadas()])
   }
 
   useEffect(() => {
@@ -75,15 +91,9 @@ export default function TransactionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id, mostrarApagadas])
 
-  // Histórico completo (sem filtro de data/pesquisa nem limite de 50), só para o cálculo
-  // do saldo real da conta — a tabela usa `transactions`, que pode estar filtrada/limitada.
   useEffect(() => {
-    supabase
-      .from('transactions')
-      .select('account_id, conta_destino_id, tipo, valor')
-      .eq('household_id', household.id)
-      .is('apagada_em', null)
-      .then(({ data }) => setTodasTransacoes(data ?? []))
+    carregarHistoricoSaldo()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id])
 
   useEffect(() => {
@@ -125,7 +135,7 @@ export default function TransactionsPage() {
         userId={user.id}
         accountId={accountId}
         onAccountChange={setAccountId}
-        onCriada={carregarTransacoes}
+        onCriada={atualizarTudo}
       />
 
       <input
@@ -163,7 +173,7 @@ export default function TransactionsPage() {
         transactions={transacoesDaConta}
         categorias={categorias}
         contaEmFoco={accountId}
-        onAtualizado={carregarTransacoes}
+        onAtualizado={atualizarTudo}
       />
 
       <button
