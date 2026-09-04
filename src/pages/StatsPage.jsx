@@ -18,6 +18,7 @@ export default function StatsPage() {
       .from('transactions')
       .select('account_id, tipo, valor, categoria_id, data')
       .eq('household_id', household.id)
+      .is('apagada_em', null)
       .then(({ data }) => setTransacoes(data ?? []))
   }, [household.id])
 

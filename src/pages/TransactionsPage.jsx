@@ -16,6 +16,8 @@ export default function TransactionsPage() {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [pesquisa, setPesquisa] = useState('')
+  const [apagadas, setApagadas] = useState([])
+  const [mostrarApagadas, setMostrarApagadas] = useState(false)
 
   async function carregarTransacoes() {
     let query = supabase
@@ -24,6 +26,7 @@ export default function TransactionsPage() {
         '*, categories (nome, cor), accounts!transactions_account_id_fkey (nome, tipo), conta_destino:accounts!transactions_conta_destino_id_fkey (nome)'
       )
       .eq('household_id', household.id)
+      .is('apagada_em', null)
       .order('data', { ascending: false })
 
     if (dataInicio) query = query.gte('data', dataInicio)
@@ -40,10 +43,36 @@ export default function TransactionsPage() {
     setTransactions(data ?? [])
   }
 
+  async function carregarApagadas() {
+    const { data } = await supabase
+      .from('transactions')
+      .select(
+        '*, categories (nome, cor), accounts!transactions_account_id_fkey (nome, tipo), conta_destino:accounts!transactions_conta_destino_id_fkey (nome)'
+      )
+      .eq('household_id', household.id)
+      .not('apagada_em', 'is', null)
+      .order('apagada_em', { ascending: false })
+      .limit(50)
+
+    setApagadas(data ?? [])
+  }
+
+  async function restaurar(id) {
+    const { error } = await supabase.from('transactions').update({ apagada_em: null }).eq('id', id)
+    if (error) return
+
+    await Promise.all([carregarTransacoes(), carregarApagadas()])
+  }
+
   useEffect(() => {
     carregarTransacoes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id, dataInicio, dataFim])
+
+  useEffect(() => {
+    if (mostrarApagadas) carregarApagadas()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [household.id, mostrarApagadas])
 
   // Histórico completo (sem filtro de data/pesquisa nem limite de 50), só para o cálculo
   // do saldo real da conta — a tabela usa `transactions`, que pode estar filtrada/limitada.
@@ -52,6 +81,7 @@ export default function TransactionsPage() {
       .from('transactions')
       .select('account_id, conta_destino_id, tipo, valor')
       .eq('household_id', household.id)
+      .is('apagada_em', null)
       .then(({ data }) => setTodasTransacoes(data ?? []))
   }, [household.id])
 
@@ -71,6 +101,10 @@ export default function TransactionsPage() {
       (tx.categories?.nome ?? '').toLowerCase().includes(termo)
     )
   })
+
+  const apagadasDaConta = apagadas.filter(
+    (tx) => tx.account_id === accountId || tx.conta_destino_id === accountId
+  )
 
   const contaAtual = contas.find((c) => c.id === accountId)
   const saldo = contaAtual ? saldoDaConta(contaAtual, todasTransacoes) : 0
@@ -130,6 +164,33 @@ export default function TransactionsPage() {
         contaEmFoco={accountId}
         onAtualizado={carregarTransacoes}
       />
+
+      <button
+        type="button"
+        className="botao-link"
+        onClick={() => setMostrarApagadas((v) => !v)}
+      >
+        {mostrarApagadas ? 'Esconder apagadas' : 'Ver transações apagadas'}
+      </button>
+
+      {mostrarApagadas && (
+        <div className="transacoes-apagadas">
+          {apagadasDaConta.length === 0 ? (
+            <p className="login-form__lead">Sem transações apagadas nesta conta.</p>
+          ) : (
+            apagadasDaConta.map((tx) => (
+              <div key={tx.id} className="transacoes-apagadas__item">
+                <span>
+                  {tx.data} — {tx.descricao || '—'} — {Number(tx.valor).toFixed(2)} €
+                </span>
+                <button type="button" className="botao-link" onClick={() => restaurar(tx.id)}>
+                  Restaurar
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }

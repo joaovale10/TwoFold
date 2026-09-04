@@ -85,6 +85,7 @@ export default function CouplePage() {
       .eq('household_id', household.id)
       .in('account_id', contasCasalIds)
       .in('tipo', ['receita', 'despesa'])
+      .is('apagada_em', null)
       .then(({ data }) => setTransacoesCasal(data ?? []))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id, contas])

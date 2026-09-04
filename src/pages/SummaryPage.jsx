@@ -22,6 +22,7 @@ export default function SummaryPage() {
       .from('transactions')
       .select('account_id, conta_destino_id, tipo, valor, categoria_id, data')
       .eq('household_id', household.id)
+      .is('apagada_em', null)
       .then(({ data }) => setTransacoes(data ?? []))
 
     supabase

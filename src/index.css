@@ -663,6 +663,26 @@ input[type='color']::-webkit-color-swatch {
   cursor: default;
 }
 
+.transacoes-apagadas {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.transacoes-apagadas__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper-alt);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .tipo-toggle button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border);

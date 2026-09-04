@@ -133,6 +133,7 @@ create table transactions (
   data date not null default current_date,
   descricao text,
   created_at timestamptz not null default now(),
+  apagada_em timestamptz, -- soft-delete: not null = apagada, fica de fora das somas mas recuperável
   constraint transactions_transferencia_valida check (
     (tipo = 'transferencia' and conta_destino_id is not null and conta_destino_id <> account_id and categoria_id is null) or
     (tipo in ('receita', 'despesa') and conta_destino_id is null)
@@ -142,6 +143,7 @@ create table transactions (
 create index transactions_household_data_idx on transactions (household_id, data desc);
 create index transactions_account_idx on transactions (account_id);
 create index transactions_conta_destino_idx on transactions (conta_destino_id);
+create index transactions_apagada_em_idx on transactions (apagada_em);
 
 -- ---------------------------------------------------------------------------
 -- Budgets: mensais/anuais, por categoria. Partilhados por todo o household.

@@ -36,6 +36,7 @@ export default function BudgetsPage() {
       .select('categoria_id, valor')
       .eq('household_id', household.id)
       .eq('tipo', 'despesa')
+      .is('apagada_em', null)
       .gte('data', inicio)
 
     const totais = {}

@@ -17,7 +17,8 @@ export async function gerarNotificacoes(householdId) {
     supabase
       .from('transactions')
       .select('account_id, conta_destino_id, tipo, valor, categoria_id, data')
-      .eq('household_id', householdId),
+      .eq('household_id', householdId)
+      .is('apagada_em', null),
   ])
 
   const notificacoes = []

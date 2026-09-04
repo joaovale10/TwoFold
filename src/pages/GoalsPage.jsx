@@ -31,6 +31,7 @@ export default function GoalsPage() {
       .from('transactions')
       .select('account_id, conta_destino_id, tipo, valor, data')
       .eq('household_id', household.id)
+      .is('apagada_em', null)
 
     setTransacoes(txs ?? [])
   }

@@ -79,6 +79,17 @@ function sinalEcor(tx, contaEmFoco) {
 export default function TransactionList({ transactions, categorias = [], contaEmFoco, onAtualizado }) {
   const [editandoId, setEditandoId] = useState(null)
 
+  async function apagar(id) {
+    if (!window.confirm('Apagar esta transação? Podes restaurá-la em "Ver transações apagadas".')) return
+
+    const { error } = await supabase
+      .from('transactions')
+      .update({ apagada_em: new Date().toISOString() })
+      .eq('id', id)
+
+    if (!error) onAtualizado()
+  }
+
   if (transactions.length === 0) return <p>Ainda não há transações.</p>
 
   return (
@@ -130,6 +141,9 @@ export default function TransactionList({ transactions, categorias = [], contaEm
                 <td>
                   <button type="button" className="botao-link" onClick={() => setEditandoId(tx.id)}>
                     Editar
+                  </button>
+                  <button type="button" className="botao-link" onClick={() => apagar(tx.id)}>
+                    Apagar
                   </button>
                 </td>
               )}
