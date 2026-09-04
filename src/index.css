@@ -454,6 +454,7 @@ select {
 .app-content {
   padding: 2rem;
   max-width: 900px;
+  min-width: 0;
 }
 
 .app-content h1 {

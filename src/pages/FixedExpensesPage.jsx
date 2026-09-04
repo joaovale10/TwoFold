@@ -184,6 +184,7 @@ export default function FixedExpensesPage() {
       {despesas.length === 0 ? (
         <p>Ainda não há despesas fixas registadas.</p>
       ) : (
+        <div className="transaction-list__wrap">
         <table className="transaction-list">
           <thead>
             <tr>
@@ -277,6 +278,7 @@ export default function FixedExpensesPage() {
             )}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )

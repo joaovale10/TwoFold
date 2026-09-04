@@ -74,27 +74,37 @@ export default function BudgetsPage() {
     <div>
       <h1 className="titulo-centrado">{titulo}</h1>
 
-      <form onSubmit={submeter} className="transaction-form">
-        <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
-          <option value="">Categoria</option>
-          {categoriasDespesa.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="Limite (€)"
-          value={limite}
-          onChange={(e) => setLimite(e.target.value)}
-          required
-        />
-        <button type="submit" className="botao-primario">
-          Adicionar
-        </button>
+      <form onSubmit={submeter} className="nova-transacao">
+        <div className="nova-transacao__linha nova-transacao__linha--2">
+          <label>
+            Categoria
+            <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
+              <option value="">Categoria</option>
+              {categoriasDespesa.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Limite (€)
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="Limite (€)"
+              value={limite}
+              onChange={(e) => setLimite(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <div className="nova-transacao__acoes">
+          <button type="submit" className="botao-primario">
+            Adicionar
+          </button>
+        </div>
       </form>
       {erro && <p className="erro">{erro}</p>}
 
