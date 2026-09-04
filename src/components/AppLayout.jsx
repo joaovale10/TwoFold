@@ -7,10 +7,10 @@ import { aplicarTema, obterTemaInicial } from '../lib/theme.js'
 
 const LINKS = [
   { to: '/resumo', label: 'Resumo' },
-  { to: '/stats', label: 'Stats' },
   { to: '/transacoes', label: 'Transações' },
   { to: '/casal', label: 'Casal' },
   { to: '/contas', label: 'Contas' },
+  { to: '/stats', label: 'Stats' },
   { to: '/categorias', label: 'Categorias' },
   { to: '/despesas-fixas', label: 'Despesas Fixas' },
   { to: '/objetivos', label: 'Objetivos' },

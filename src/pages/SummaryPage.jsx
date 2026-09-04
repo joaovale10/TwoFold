@@ -208,7 +208,7 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      <p className="login-form__lead" style={{ textTransform: 'capitalize', textAlign: 'center' }}>
+      <p className="login-form__lead rotulo-periodo" style={{ textTransform: 'capitalize', textAlign: 'center' }}>
         {rotuloPeriodo}
       </p>
 
@@ -225,23 +225,34 @@ export default function SummaryPage() {
         </div>
       )}
 
+      <div className="resumo-cartao resumo-cartao--destaque">
+        <p className="resumo-cartao__label">Património</p>
+        <p className="resumo-cartao__valor">{patrimonio.toFixed(2)} €</p>
+        {periodo === 'mes-atual' && (
+          <p className={`resumo-evolucao ${evolucao >= 0 ? 'positiva' : 'negativa'}`}>
+            {evolucao >= 0 ? '↑' : '↓'} {Math.abs(evolucao).toFixed(2)} € vs. mês passado
+          </p>
+        )}
+      </div>
+
+      <div className="resumo-cartao">
+        <p className="resumo-cartao__label">Despesas no período</p>
+        <p className="resumo-cartao__valor">{atual.despesas.toFixed(2)} €</p>
+      </div>
+
+      <div className="resumo-cartao">
+        <p className="resumo-cartao__label">Despesas no período por categoria</p>
+        {linhasCategorias.length === 0 ? (
+          <p>Sem despesas neste período.</p>
+        ) : (
+          <CategoryBarChart dados={dadosGrafico} />
+        )}
+      </div>
+
       <div className="resumo-grelha">
-        <div className="resumo-cartao resumo-cartao--destaque">
-          <p className="resumo-cartao__label">Património</p>
-          <p className="resumo-cartao__valor">{patrimonio.toFixed(2)} €</p>
-          {periodo === 'mes-atual' && (
-            <p className={`resumo-evolucao ${evolucao >= 0 ? 'positiva' : 'negativa'}`}>
-              {evolucao >= 0 ? '↑' : '↓'} {Math.abs(evolucao).toFixed(2)} € vs. mês passado
-            </p>
-          )}
-        </div>
         <div className="resumo-cartao">
           <p className="resumo-cartao__label">Receitas no período</p>
           <p className="resumo-cartao__valor">{atual.receitas.toFixed(2)} €</p>
-        </div>
-        <div className="resumo-cartao">
-          <p className="resumo-cartao__label">Despesas no período</p>
-          <p className="resumo-cartao__valor">{atual.despesas.toFixed(2)} €</p>
         </div>
         <div className="resumo-cartao">
           <p className="resumo-cartao__label">Poupança no período</p>
@@ -258,15 +269,6 @@ export default function SummaryPage() {
           <p className="resumo-cartao__label">🏠 Casal — Conjunto</p>
           <p className="resumo-cartao__valor">{saldoCasal.toFixed(2)} €</p>
         </div>
-      </div>
-
-      <div className="resumo-cartao">
-        <p className="resumo-cartao__label">Despesas no período por categoria</p>
-        {linhasCategorias.length === 0 ? (
-          <p>Sem despesas neste período.</p>
-        ) : (
-          <CategoryBarChart dados={dadosGrafico} />
-        )}
       </div>
 
       <div className="resumo-duas-colunas">

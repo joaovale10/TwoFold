@@ -766,6 +766,10 @@ input[type='color']::-webkit-color-swatch {
   gap: 0.75rem;
 }
 
+.rotulo-periodo {
+  margin: 1.1rem 0 1.35rem;
+}
+
 .resumo-grelha {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -854,8 +858,28 @@ input[type='color']::-webkit-color-swatch {
 }
 
 @media (max-width: 720px) {
-  .resumo-duas-colunas {
+  .resumo-duas-colunas,
+  .resumo-grelha,
+  .resumo-grelha--contas {
     grid-template-columns: 1fr;
+  }
+}
+
+.monthly-bar-chart__scroll {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .monthly-bar-chart__scroll {
+    overflow-x: auto;
+  }
+
+  .monthly-bar-chart__inner {
+    min-width: 480px;
+  }
+
+  .stats-valor-total {
+    font-size: 1.15rem;
   }
 }
 

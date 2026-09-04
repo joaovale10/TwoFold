@@ -123,13 +123,13 @@ export default function StatsPage() {
         </div>
       </div>
 
-      <p className="login-form__lead" style={{ textTransform: 'capitalize', textAlign: 'center' }}>
+      <p className="login-form__lead rotulo-periodo" style={{ textTransform: 'capitalize', textAlign: 'center' }}>
         {rotuloPeriodo}
       </p>
 
       <div className="resumo-cartao">
         <p className="resumo-cartao__label">Despesas totais</p>
-        <p className="resumo-cartao__valor">{despesasTotais.toFixed(2)} €</p>
+        <p className="resumo-cartao__valor stats-valor-total">{despesasTotais.toFixed(2)} €</p>
         <MonthlyBarChart dados={despesasPorMes} mesDestacado={periodo === 'mes-atual' ? hoje.getMonth() : -1} />
       </div>
 

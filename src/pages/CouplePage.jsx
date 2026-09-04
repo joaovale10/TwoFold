@@ -188,7 +188,7 @@ export default function CouplePage() {
         </div>
       </div>
 
-      <p className="login-form__lead" style={{ textTransform: 'capitalize' }}>
+      <p className="login-form__lead rotulo-periodo" style={{ textTransform: 'capitalize' }}>
         · {rotuloPeriodo} ·
       </p>
 
