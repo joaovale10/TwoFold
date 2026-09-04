@@ -698,13 +698,61 @@ input[type='color']::-webkit-color-swatch {
 }
 
 @media (max-width: 720px) {
-  .transaction-list {
-    font-size: 0.8rem;
+  .transaction-list,
+  .transaction-list thead,
+  .transaction-list tbody,
+  .transaction-list th,
+  .transaction-list td,
+  .transaction-list tr {
+    display: block;
   }
 
-  .transaction-list th,
+  .transaction-list__wrap {
+    overflow-x: visible;
+  }
+
+  .transaction-list thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .transaction-list tr {
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .transaction-list tbody tr:last-child {
+    border-bottom: none;
+  }
+
   .transaction-list td {
-    padding: 0.4rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+    border-bottom: none;
+    text-align: right;
+  }
+
+  .transaction-list td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .transaction-list td select,
+  .transaction-list td input {
+    max-width: 60%;
+  }
+
+  .transaction-list {
+    font-size: 0.85rem;
   }
 }
 

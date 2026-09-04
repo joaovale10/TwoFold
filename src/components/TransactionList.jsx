@@ -30,13 +30,13 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
 
   return (
     <tr>
-      <td>
+      <td data-label="Data">
         <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
       </td>
-      <td>
+      <td data-label="Descrição">
         <input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
       </td>
-      <td>
+      <td data-label="Categoria">
         {tx.tipo === 'transferencia' ? (
           '—'
         ) : (
@@ -50,11 +50,11 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
           </select>
         )}
       </td>
-      <td>{tx.accounts?.nome}</td>
-      <td>
+      <td data-label="Conta">{tx.accounts?.nome}</td>
+      <td data-label="Valor">
         <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
       </td>
-      <td>
+      <td data-label="Ações">
         <button type="button" className="botao-link" onClick={guardar}>
           Guardar
         </button>
@@ -115,19 +115,21 @@ export default function TransactionList({ transactions, categorias = [], contaEm
 
           return (
             <tr key={tx.id} className={tx.tipo}>
-              <td>{tx.data}</td>
-              <td>
+              <td data-label="Data">{tx.data}</td>
+              <td data-label="Descrição">
                 {tx.descricao || '—'}
                 {tx.tipo === 'transferencia' && tx.conta_destino?.nome && ` → ${tx.conta_destino.nome}`}
               </td>
-              <td style={{ color: tx.categories?.cor }}>{tx.categories?.nome ?? '—'}</td>
-              <td>{tx.accounts?.nome}</td>
-              <td className="transaction-list__valor" style={{ color: cor }}>
+              <td data-label="Categoria" style={{ color: tx.categories?.cor }}>
+                {tx.categories?.nome ?? '—'}
+              </td>
+              <td data-label="Conta">{tx.accounts?.nome}</td>
+              <td data-label="Valor" className="transaction-list__valor" style={{ color: cor }}>
                 {sinal}
                 {Number(tx.valor).toFixed(2)} €
               </td>
               {onAtualizado && (
-                <td>
+                <td data-label="Ações">
                   <button type="button" className="botao-link" onClick={() => setEditandoId(tx.id)}>
                     Editar
                   </button>
