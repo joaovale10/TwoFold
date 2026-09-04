@@ -28,6 +28,7 @@ export default function TransactionsPage() {
       .eq('household_id', household.id)
       .is('apagada_em', null)
       .order('data', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (dataInicio) query = query.gte('data', dataInicio)
     if (dataFim) query = query.lte('data', dataFim)
