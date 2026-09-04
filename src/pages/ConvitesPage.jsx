@@ -107,40 +107,38 @@ export default function ConvitesPage() {
       {convites.length === 0 ? (
         <p>Ainda não criaste nenhum convite.</p>
       ) : (
-        <div className="transaction-list__wrap">
-          <table className="transaction-list">
-            <thead>
-              <tr>
-                <th>Espaço</th>
-                <th>Email</th>
-                <th>Estado</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {convites.map((c) => {
-                const expirado = new Date(c.expira_em) < new Date()
-                return (
-                  <tr key={c.id}>
-                    <td>{c.household_nome}</td>
-                    <td>{c.email}</td>
-                    <td>{estadoDe(c)}</td>
-                    <td>
-                      {!c.usado && !expirado && (
-                        <button type="button" className="botao-link" onClick={() => copiarLink(c.codigo)}>
-                          {linkCopiado === c.codigo ? 'Copiado!' : 'Copiar link'}
-                        </button>
-                      )}
-                      <button type="button" className="botao-link" onClick={() => removerConvite(c.id)}>
-                        Remover
+        <table className="transaction-list">
+          <thead>
+            <tr>
+              <th>Espaço</th>
+              <th>Email</th>
+              <th>Estado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {convites.map((c) => {
+              const expirado = new Date(c.expira_em) < new Date()
+              return (
+                <tr key={c.id}>
+                  <td>{c.household_nome}</td>
+                  <td>{c.email}</td>
+                  <td>{estadoDe(c)}</td>
+                  <td>
+                    {!c.usado && !expirado && (
+                      <button type="button" className="botao-link" onClick={() => copiarLink(c.codigo)}>
+                        {linkCopiado === c.codigo ? 'Copiado!' : 'Copiar link'}
                       </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                    <button type="button" className="botao-link" onClick={() => removerConvite(c.id)}>
+                      Remover
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   )

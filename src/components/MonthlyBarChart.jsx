@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -14,9 +15,21 @@ function ValorNaBarra({ x, y, width, value }) {
 // dados: array de 12 valores (índice = mês, 0-11)
 export default function MonthlyBarChart({ dados, mesDestacado }) {
   const dadosGrafico = dados.map((valor, mes) => ({ mes: MESES[mes], valor, destacado: mes === mesDestacado }))
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const id = requestAnimationFrame(() => {
+      const mesAtual = new Date().getMonth()
+      const alvo = ((mesAtual + 1) / 12) * el.scrollWidth - el.clientWidth
+      el.scrollLeft = Math.max(0, Math.min(alvo, el.scrollWidth - el.clientWidth))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   return (
-    <div className="monthly-bar-chart__scroll">
+    <div className="monthly-bar-chart__scroll" ref={scrollRef}>
       <div className="monthly-bar-chart__inner">
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={dadosGrafico} margin={{ top: 20, right: 4, bottom: 4, left: 4 }}>
