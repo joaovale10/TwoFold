@@ -19,6 +19,7 @@ export default function TransactionForm({
   const [descricao, setDescricao] = useState('')
   const [aEnviar, setAEnviar] = useState(false)
   const [erro, setErro] = useState(null)
+  const [sucesso, setSucesso] = useState(false)
 
   const categoriasDoTipo = categories.filter((c) => c.tipo === tipo)
   const contasDestino = accounts.filter((a) => a.id !== accountId)
@@ -73,7 +74,11 @@ export default function TransactionForm({
 
     setValor('')
     setDescricao('')
+    setCategoriaId('')
     setContaDestinoId('')
+    setData(new Date().toISOString().slice(0, 10))
+    setSucesso(true)
+    setTimeout(() => setSucesso(false), 2500)
     onCriada()
   }
 
@@ -173,6 +178,7 @@ export default function TransactionForm({
       </div>
 
       {erro && <p className="erro">{erro}</p>}
+      {sucesso && <p className="sucesso">Transação adicionada.</p>}
 
       <div className="nova-transacao__acoes">
         <button type="button" className="botao-link" onClick={limpar}>

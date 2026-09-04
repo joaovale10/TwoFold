@@ -30,6 +30,12 @@ const SECCOES = [
       'Cria as tuas contas pessoais (só tu vês) e contas casal (partilhadas). Cada conta tem um ícone (só decorativo, escolhes clicando nele), saldo inicial e podes editar ou desativar a qualquer momento — só contas ativas aparecem nos formulários de escolher conta.',
   },
   {
+    icone: '📈',
+    titulo: 'Stats',
+    texto:
+      'Uma vista mais analítica que o Resumo: alterna entre Mês atual, Ano atual ou Total, vê a evolução das despesas mês a mês num gráfico de barras (o mês atual fica destacado) e a lista de categorias/subcategorias ordenada por peso, com o número de movimentos e a % do total.',
+  },
+  {
     icone: '🏷️',
     titulo: 'Categorias',
     texto:
@@ -57,7 +63,7 @@ const SECCOES = [
     icone: '👤',
     titulo: 'A minha conta',
     texto:
-      'Clica no teu nome, no fundo da sidebar, para definires o teu nome de exibição, um username opcional (para entrares com ele em vez do email) e o nome do teu espaço — útil se hoje és só tu e mais tarde passares a partilhar com alguém. Se instalaste a app no telemóvel e não vês as novidades mais recentes, usa aqui o botão "Forçar atualização".',
+      'Clica no teu nome, no fundo da sidebar, para definires o teu nome de exibição, um username opcional (para entrares com ele em vez do email) e o nome do teu espaço — útil se hoje és só tu e mais tarde passares a partilhar com alguém. Se instalaste a app no telemóvel e não vês as novidades mais recentes, usa aqui o botão "Forçar atualização". Se te esqueceres da password, usa o link "Esqueceste-te da password?" na página de login — recebes um email para definires uma nova.',
   },
 ]
 
