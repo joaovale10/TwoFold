@@ -77,7 +77,7 @@ function LinhaCategoria({ categoria, subcategorias, nivel, userId, onTornarCasal
   const [nome, setNome] = useState(categoria.nome)
   const [cor, setCor] = useState(categoria.cor ?? '#4f86a0')
   const [erro, setErro] = useState(null)
-  const [colapsada, setColapsada] = useState(false)
+  const [colapsada, setColapsada] = useState(true)
 
   async function guardar(e) {
     e.preventDefault()
@@ -251,6 +251,7 @@ export default function CategoriesPage() {
 
     setNome('')
     setParentId('')
+    setFormAberto(false)
     atualizar()
   }
 
@@ -302,65 +303,86 @@ export default function CategoriesPage() {
       <h1 className="titulo-centrado">Categorias</h1>
 
       <div className="categoria-acoes">
-        <button type="button" className="botao-primario" onClick={() => setFormAberto((v) => !v)}>
-          {formAberto ? 'Fechar' : '+ Nova categoria'}
+        <button type="button" className="botao-primario" onClick={() => setFormAberto(true)}>
+          + Nova categoria
         </button>
       </div>
 
       {formAberto && (
-        <form onSubmit={submeter} className="nova-transacao">
-          <div className="nova-transacao__linha nova-transacao__linha--2">
-            <label>
-              Nome
-              <input placeholder="Ex: Ginásio" value={nome} onChange={(e) => setNome(e.target.value)} required />
-            </label>
-            <label>
-              Tipo
-              <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                <option value="despesa">Despesa</option>
-                <option value="receita">Receita</option>
-              </select>
-            </label>
-          </div>
+        <div className="categoria-modal-fundo" onClick={() => setFormAberto(false)}>
+          <div className="categoria-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="categoria-modal__cabecalho">
+              <h2>Nova categoria</h2>
+              <button
+                type="button"
+                className="botao-link"
+                aria-label="Fechar"
+                onClick={() => setFormAberto(false)}
+              >
+                ✕
+              </button>
+            </div>
 
-          <div className="nova-transacao__linha nova-transacao__linha--2">
-            <label>
-              Categoria-mãe
-              <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
-                <option value="">Categoria Principal</option>
-                {possiveisMae
-                  .filter((c) => c.tipo === tipo)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      Subcategoria de {c.nome}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Cor
-              <input type="color" value={cor} onChange={(e) => setCor(e.target.value)} />
-            </label>
-          </div>
+            <form onSubmit={submeter} className="nova-transacao">
+              <div className="nova-transacao__linha nova-transacao__linha--2">
+                <label>
+                  Nome
+                  <input
+                    placeholder="Ex: Ginásio"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  Tipo
+                  <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                    <option value="despesa">Despesa</option>
+                    <option value="receita">Receita</option>
+                  </select>
+                </label>
+              </div>
 
-          <div className="nova-transacao__linha nova-transacao__linha--2">
-            <label>
-              Visibilidade
-              <select value={visibilidade} onChange={(e) => setVisibilidade(e.target.value)}>
-                <option value="casal">Casal (partilhada)</option>
-                <option value="individual">Individual (só eu)</option>
-              </select>
-            </label>
-          </div>
+              <div className="nova-transacao__linha nova-transacao__linha--2">
+                <label>
+                  Categoria-mãe
+                  <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
+                    <option value="">Categoria Principal</option>
+                    {possiveisMae
+                      .filter((c) => c.tipo === tipo)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          Subcategoria de {c.nome}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label>
+                  Cor
+                  <input type="color" value={cor} onChange={(e) => setCor(e.target.value)} />
+                </label>
+              </div>
 
-          {erro && <p className="erro">{erro}</p>}
+              <div className="nova-transacao__linha nova-transacao__linha--2">
+                <label>
+                  Visibilidade
+                  <select value={visibilidade} onChange={(e) => setVisibilidade(e.target.value)}>
+                    <option value="casal">Casal (partilhada)</option>
+                    <option value="individual">Individual (só eu)</option>
+                  </select>
+                </label>
+              </div>
 
-          <div className="nova-transacao__acoes">
-            <button type="submit" className="botao-primario">
-              Adicionar
-            </button>
+              {erro && <p className="erro">{erro}</p>}
+
+              <div className="nova-transacao__acoes">
+                <button type="submit" className="botao-primario">
+                  Adicionar
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       )}
 
       <BlocoCategorias

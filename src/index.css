@@ -1109,6 +1109,45 @@ input[type='color']::-webkit-color-swatch {
   color: var(--accent);
 }
 
+.categoria-modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.categoria-modal {
+  width: 100%;
+  max-width: 30rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.categoria-modal__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.categoria-modal__cabecalho h2 {
+  margin: 0;
+}
+
+.categoria-modal__cabecalho .botao-link {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Contas (cartões)                                                        */
 /* ---------------------------------------------------------------------- */

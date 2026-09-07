@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 import { dentroDoMes } from '../lib/datas.js'
 import { saldoDaConta } from '../lib/saldo.js'
-import CategoryBarChart from '../components/CategoryBarChart.jsx'
+import CategoryPieChart from '../components/CategoryPieChart.jsx'
 
 export default function SummaryPage() {
   const { household, contas, categorias } = useOutletContext()
@@ -40,10 +40,11 @@ export default function SummaryPage() {
       .then(({ data }) => setBudgetsMensais(data ?? []))
   }, [household.id])
 
-  const contasPessoais = contas.filter((c) => c.owner_user_id === user.id)
-  const contasCasal = contas.filter((c) => c.tipo === 'casal')
+  const contasAtivas = contas.filter((c) => c.ativa)
+  const contasPessoais = contasAtivas.filter((c) => c.owner_user_id === user.id)
+  const contasCasal = contasAtivas.filter((c) => c.tipo === 'casal')
   const contasNoAmbito =
-    ambito === 'pessoal' ? contasPessoais : ambito === 'casal' ? contasCasal : contas
+    ambito === 'pessoal' ? contasPessoais : ambito === 'casal' ? contasCasal : contasAtivas
 
   const idsContasNoAmbito = new Set(contasNoAmbito.map((c) => c.id))
   const saldoPessoal = contasPessoais.reduce((t, c) => t + saldoDaConta(c, transacoes), 0)
@@ -246,7 +247,7 @@ export default function SummaryPage() {
         {linhasCategorias.length === 0 ? (
           <p>Sem despesas neste período.</p>
         ) : (
-          <CategoryBarChart dados={dadosGrafico} />
+          <CategoryPieChart dados={dadosGrafico} />
         )}
       </div>
 

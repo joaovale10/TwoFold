@@ -62,7 +62,7 @@ export default function CouplePage() {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
 
-  const contasCasalIds = contas.filter((c) => c.tipo === 'casal').map((c) => c.id)
+  const contasCasalIds = contas.filter((c) => c.tipo === 'casal' && c.ativa).map((c) => c.id)
 
   async function carregarMembros() {
     const { data } = await supabase
