@@ -972,11 +972,141 @@ input[type='color']::-webkit-color-swatch {
   height: 10px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
-.categoria-lista--sub {
-  margin-top: 0.35rem;
-  margin-left: 0.5rem;
+.categoria-acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.categoria-bloco {
+  margin-bottom: 1.75rem;
+}
+
+.categoria-secao-titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 1rem 0 0.4rem;
+}
+
+.categoria-arvore {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.categoria-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.categoria-linha--nivel1 {
+  padding-left: 1.75rem;
+  border-bottom: none;
+}
+
+.categoria-linha--nivel1 .categoria-linha__nome {
+  font-weight: 400;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.categoria-linha--nivel1 .categoria-cor {
+  width: 8px;
+  height: 8px;
+}
+
+.categoria-linha__nome {
+  flex: 1;
+  font-weight: 600;
+}
+
+.categoria-linha__chevron,
+.categoria-linha__chevron-espaco {
+  width: 1.1rem;
+  flex-shrink: 0;
+}
+
+.categoria-linha__chevron {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+.categoria-linha__form-edicao {
+  display: flex;
+  flex: 1;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.categoria-linha__form-edicao input[type='text'],
+.categoria-linha__form-edicao input:not([type='color']) {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.categoria-menu {
+  position: relative;
+}
+
+.categoria-menu__botao {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+}
+
+.categoria-menu__botao:hover {
+  color: var(--ink);
+}
+
+.categoria-menu__lista {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  list-style: none;
+  margin: 0.2rem 0 0;
+  padding: 0.3rem;
+  min-width: 11rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.categoria-menu__lista button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--ink);
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.categoria-menu__lista button:hover {
+  background: var(--paper-alt);
+  color: var(--accent);
 }
 
 /* ---------------------------------------------------------------------- */

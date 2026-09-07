@@ -129,10 +129,10 @@ export default function TransactionList({ transactions, categorias = [], contaEm
               <td>{tx.data}</td>
               <td>
                 {tx.descricao || '—'}
-                {tx.tipo === 'transferencia' && tx.conta_destino?.nome && ` → ${tx.conta_destino.nome}`}
+                {tx.tipo === 'transferencia' && ` → ${tx.conta_destino?.nome ?? 'Conta privada'}`}
               </td>
               <td style={{ color: tx.categories?.cor }}>{tx.categories?.nome ?? '—'}</td>
-              <td>{tx.accounts?.nome}</td>
+              <td>{tx.accounts?.nome ?? (tx.tipo === 'transferencia' ? 'Conta privada' : '')}</td>
               <td className="transaction-list__valor" style={{ color: cor }}>
                 {sinal}
                 {Number(tx.valor).toFixed(2)} €

@@ -98,6 +98,7 @@ $$;
 create table categories (
   id uuid primary key default gen_random_uuid(),
   household_id uuid references households (id) on delete cascade, -- null = categoria global
+  owner_user_id uuid references auth.users (id) on delete cascade, -- null = casal (partilhada); preenchido = individual (só o dono)
   parent_id uuid references categories (id), -- não nulo = subcategoria
   nome text not null,
   tipo text not null check (tipo in ('receita', 'despesa')),
@@ -449,21 +450,28 @@ create policy "membros veem a conta casal e as suas próprias contas"
   using (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()))
   with check (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()));
 
-create policy "toda a gente vê categorias globais ou do seu household"
+create policy "vê categorias globais, casal do household, ou individuais próprias"
   on categories for select
-  using (household_id is null or is_household_member(household_id));
+  using (
+    household_id is null
+    or (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()))
+  );
 
-create policy "membros gerem categorias do household"
+create policy "membros criam categorias casal ou individuais próprias"
   on categories for insert
-  with check (is_household_member(household_id));
+  with check (
+    is_household_member(household_id)
+    and (owner_user_id is null or owner_user_id = auth.uid())
+  );
 
--- Cada household edita livremente as SUAS categorias (as predefinidas são
+-- Cada household edita livremente as SUAS categorias casal (as predefinidas são
 -- clonadas para dentro do household em admin_criar_espaco/convidar_parceiro,
--- não ficam partilhadas — cada espaço tem autonomia total sobre as suas).
-create policy "membros editam as categorias do seu household"
+-- não ficam partilhadas — cada espaço tem autonomia total sobre as suas); uma
+-- categoria individual só pode ser editada (ou tornada casal) pelo próprio dono.
+create policy "membros editam categorias casal ou as suas próprias individuais"
   on categories for update
-  using (is_household_member(household_id))
-  with check (is_household_member(household_id));
+  using (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()))
+  with check (is_household_member(household_id) and (owner_user_id is null or owner_user_id = auth.uid()));
 
 create policy "membros veem transações das contas a que têm acesso"
   on transactions for all
@@ -476,6 +484,22 @@ create policy "membros veem transações das contas a que têm acesso"
     is_household_member(household_id)
     and can_access_account(account_id)
     and (conta_destino_id is null or can_access_account(conta_destino_id))
+  );
+
+-- Numa transferência entre uma conta pessoal de alguém e a conta casal, a policy
+-- acima (exige acesso às DUAS contas) esconde a transação de quem não é dono da
+-- conta pessoal — mesmo afetando o saldo casal que ambos veem. Esta policy extra,
+-- só de leitura, mostra a transação a quem tenha acesso a PELO MENOS UMA das duas
+-- contas (policies permissivas juntam-se com OR); criar/editar/apagar continua a
+-- exigir acesso às duas contas, via a policy acima.
+create policy "membros veem transferências que tocam numa conta acessível"
+  on transactions for select
+  using (
+    is_household_member(household_id)
+    and (
+      can_access_account(account_id)
+      or (conta_destino_id is not null and can_access_account(conta_destino_id))
+    )
   );
 
 create policy "membros gerem orçamentos do household"
