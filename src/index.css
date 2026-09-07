@@ -1109,6 +1109,15 @@ input[type='color']::-webkit-color-swatch {
   color: var(--accent);
 }
 
+.categoria-menu__lista .categoria-menu__botao-perigo {
+  color: var(--danger);
+}
+
+.categoria-menu__lista .categoria-menu__botao-perigo:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
 .categoria-modal-fundo {
   position: fixed;
   inset: 0;

@@ -259,6 +259,51 @@ $$;
 -- invocar diretamente, já que faz insert bypassando RLS para QUALQUER household_id.
 revoke execute on function clonar_categorias_predefinidas(uuid) from public;
 
+-- Apaga uma categoria do household (e as suas subcategorias, se for uma
+-- categoria principal). Nunca apaga transações: só liberta o categoria_id
+-- (fica "Sem categoria"); regras de categorização e orçamentos dessa
+-- categoria deixam de fazer sentido e são removidos; despesas fixas ficam
+-- sem categoria. security definer porque uma categoria casal pode estar a
+-- ser usada em transações de contas pessoais do outro membro, que este
+-- utilizador não pode editar diretamente por RLS de accounts/transactions.
+create or replace function apagar_categoria(p_categoria_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_categoria categories%rowtype;
+  v_ids uuid[];
+begin
+  select * into v_categoria from categories where id = p_categoria_id;
+
+  if not found then
+    raise exception 'Categoria não encontrada';
+  end if;
+
+  if v_categoria.household_id is null or not is_household_member(v_categoria.household_id) then
+    raise exception 'Sem acesso a esta categoria';
+  end if;
+
+  if v_categoria.owner_user_id is not null and v_categoria.owner_user_id <> auth.uid() then
+    raise exception 'Só o dono pode apagar esta categoria individual';
+  end if;
+
+  select array_agg(id) into v_ids from categories where id = p_categoria_id or parent_id = p_categoria_id;
+
+  delete from category_rules where categoria_id = any(v_ids);
+  delete from budgets where categoria_id = any(v_ids);
+  update fixed_expenses set categoria_id = null where categoria_id = any(v_ids);
+  update transactions set categoria_id = null where categoria_id = any(v_ids);
+
+  delete from categories where parent_id = p_categoria_id;
+  delete from categories where id = p_categoria_id;
+end;
+$$;
+
+grant execute on function apagar_categoria(uuid) to authenticated;
+
 -- Só o admin cria espaços novos (amigo solteiro ou 1º membro de um casal).
 create or replace function admin_criar_espaco(p_nome text, p_email text)
 returns text

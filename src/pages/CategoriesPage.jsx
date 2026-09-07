@@ -3,7 +3,15 @@ import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 
-function MenuCategoria({ podeSubcategoria, podeTornarCasal, onEditar, onAdicionarSub, onTornarCasal }) {
+function MenuCategoria({
+  podeSubcategoria,
+  podeTornarCasal,
+  podeApagar,
+  onEditar,
+  onAdicionarSub,
+  onTornarCasal,
+  onApagar,
+}) {
   const [aberto, setAberto] = useState(false)
   const ref = useRef(null)
 
@@ -66,13 +74,36 @@ function MenuCategoria({ podeSubcategoria, podeTornarCasal, onEditar, onAdiciona
               </button>
             </li>
           )}
+          {podeApagar && (
+            <li>
+              <button
+                type="button"
+                className="categoria-menu__botao-perigo"
+                onClick={() => {
+                  setAberto(false)
+                  onApagar()
+                }}
+              >
+                Apagar
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>
   )
 }
 
-function LinhaCategoria({ categoria, subcategorias, nivel, userId, onTornarCasal, onAdicionarSub, atualizar }) {
+function LinhaCategoria({
+  categoria,
+  subcategorias,
+  nivel,
+  userId,
+  onTornarCasal,
+  onAdicionarSub,
+  onApagar,
+  atualizar,
+}) {
   const [aEditar, setAEditar] = useState(false)
   const [nome, setNome] = useState(categoria.nome)
   const [cor, setCor] = useState(categoria.cor ?? '#4f86a0')
@@ -135,9 +166,11 @@ function LinhaCategoria({ categoria, subcategorias, nivel, userId, onTornarCasal
         <MenuCategoria
           podeSubcategoria={nivel === 0}
           podeTornarCasal={categoria.owner_user_id === userId}
+          podeApagar={categoria.owner_user_id === null || categoria.owner_user_id === userId}
           onEditar={() => setAEditar(true)}
           onAdicionarSub={() => onAdicionarSub(categoria)}
           onTornarCasal={() => onTornarCasal(categoria.id)}
+          onApagar={() => onApagar(categoria)}
         />
       </li>
       {temSubcategorias &&
@@ -151,6 +184,7 @@ function LinhaCategoria({ categoria, subcategorias, nivel, userId, onTornarCasal
             userId={userId}
             onTornarCasal={onTornarCasal}
             onAdicionarSub={onAdicionarSub}
+            onApagar={onApagar}
             atualizar={atualizar}
           />
         ))}
@@ -158,7 +192,7 @@ function LinhaCategoria({ categoria, subcategorias, nivel, userId, onTornarCasal
   )
 }
 
-function ListaPorTipo({ titulo, categorias, subDe, userId, onTornarCasal, onAdicionarSub, atualizar }) {
+function ListaPorTipo({ titulo, categorias, subDe, userId, onTornarCasal, onAdicionarSub, onApagar, atualizar }) {
   if (categorias.length === 0) return null
 
   return (
@@ -174,6 +208,7 @@ function ListaPorTipo({ titulo, categorias, subDe, userId, onTornarCasal, onAdic
             userId={userId}
             onTornarCasal={onTornarCasal}
             onAdicionarSub={onAdicionarSub}
+            onApagar={onApagar}
             atualizar={atualizar}
           />
         ))}
@@ -182,7 +217,17 @@ function ListaPorTipo({ titulo, categorias, subDe, userId, onTornarCasal, onAdic
   )
 }
 
-function BlocoCategorias({ titulo, vazio, principais, subDe, userId, onTornarCasal, onAdicionarSub, atualizar }) {
+function BlocoCategorias({
+  titulo,
+  vazio,
+  principais,
+  subDe,
+  userId,
+  onTornarCasal,
+  onAdicionarSub,
+  onApagar,
+  atualizar,
+}) {
   const receitas = principais.filter((c) => c.tipo === 'receita')
   const despesas = principais.filter((c) => c.tipo === 'despesa')
 
@@ -200,6 +245,7 @@ function BlocoCategorias({ titulo, vazio, principais, subDe, userId, onTornarCas
             userId={userId}
             onTornarCasal={onTornarCasal}
             onAdicionarSub={onAdicionarSub}
+            onApagar={onApagar}
             atualizar={atualizar}
           />
           <ListaPorTipo
@@ -209,6 +255,7 @@ function BlocoCategorias({ titulo, vazio, principais, subDe, userId, onTornarCas
             userId={userId}
             onTornarCasal={onTornarCasal}
             onAdicionarSub={onAdicionarSub}
+            onApagar={onApagar}
             atualizar={atualizar}
           />
         </>
@@ -257,6 +304,21 @@ export default function CategoriesPage() {
 
   async function tornarCasal(id) {
     await supabase.from('categories').update({ owner_user_id: null }).eq('id', id)
+    atualizar()
+  }
+
+  async function apagarCategoria(categoria) {
+    const temSubs = categorias.some((c) => c.parent_id === categoria.id)
+    const aviso = temSubs
+      ? `Apagar "${categoria.nome}" e as suas subcategorias? As transações associadas ficam sem categoria.`
+      : `Apagar "${categoria.nome}"? As transações associadas ficam sem categoria.`
+    if (!window.confirm(aviso)) return
+
+    const { error } = await supabase.rpc('apagar_categoria', { p_categoria_id: categoria.id })
+    if (error) {
+      window.alert(error.message)
+      return
+    }
     atualizar()
   }
 
@@ -393,6 +455,7 @@ export default function CategoriesPage() {
         userId={user.id}
         onTornarCasal={tornarCasal}
         onAdicionarSub={adicionarSubcategoria}
+        onApagar={apagarCategoria}
         atualizar={atualizar}
       />
 
@@ -404,6 +467,7 @@ export default function CategoriesPage() {
         userId={user.id}
         onTornarCasal={tornarCasal}
         onAdicionarSub={adicionarSubcategoria}
+        onApagar={apagarCategoria}
         atualizar={atualizar}
       />
 
