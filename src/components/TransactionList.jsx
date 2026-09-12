@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { nivelDaCategoria, nomeCompletoCategoria } from '../lib/categorias'
 
 function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
   const categoriasDoTipo = categorias.filter((c) => c.tipo === tx.tipo)
+  const categoriasTopoDoTipo = categoriasDoTipo.filter((c) => !c.parent_id)
   const [data, setData] = useState(tx.data)
   const [descricao, setDescricao] = useState(tx.descricao ?? '')
-  const [categoriaId, setCategoriaId] = useState(tx.categoria_id ?? '')
+  const nivelInicial = nivelDaCategoria(categorias, tx.categoria_id)
+  const [categoriaTopoId, setCategoriaTopoId] = useState(nivelInicial.topoId)
+  const [categoriaSubId, setCategoriaSubId] = useState(nivelInicial.subId)
   const [valor, setValor] = useState(String(tx.valor))
   const [erro, setErro] = useState(null)
+
+  const subcategoriasDaTopo = categoriasDoTipo.filter((c) => c.parent_id === categoriaTopoId)
+  const categoriaId = categoriaSubId || categoriaTopoId
 
   async function guardar(e) {
     e.preventDefault()
@@ -40,14 +47,32 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
         {tx.tipo === 'transferencia' ? (
           '—'
         ) : (
-          <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
-            <option value="">Sem categoria</option>
-            {categoriasDoTipo.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
+          <>
+            <select
+              value={categoriaTopoId}
+              onChange={(e) => {
+                setCategoriaTopoId(e.target.value)
+                setCategoriaSubId('')
+              }}
+            >
+              <option value="">Sem categoria</option>
+              {categoriasTopoDoTipo.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+            {subcategoriasDaTopo.length > 0 && (
+              <select value={categoriaSubId} onChange={(e) => setCategoriaSubId(e.target.value)}>
+                <option value="">Nenhuma</option>
+                {subcategoriasDaTopo.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            )}
+          </>
         )}
       </td>
       <td>{tx.accounts?.nome}</td>
@@ -131,7 +156,9 @@ export default function TransactionList({ transactions, categorias = [], contaEm
                 {tx.descricao || '—'}
                 {tx.tipo === 'transferencia' && ` → ${tx.conta_destino?.nome ?? 'Conta privada'}`}
               </td>
-              <td style={{ color: tx.categories?.cor }}>{tx.categories?.nome ?? '—'}</td>
+              <td style={{ color: tx.categories?.cor }}>
+                {nomeCompletoCategoria(categorias, tx.categoria_id) ?? '—'}
+              </td>
               <td>{tx.accounts?.nome ?? (tx.tipo === 'transferencia' ? 'Conta privada' : '')}</td>
               <td className="transaction-list__valor" style={{ color: cor }}>
                 {sinal}

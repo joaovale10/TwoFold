@@ -571,9 +571,14 @@ select {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
+.nova-transacao__linha--4 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
 @media (max-width: 640px) {
   .nova-transacao__linha--2,
-  .nova-transacao__linha--3 {
+  .nova-transacao__linha--3,
+  .nova-transacao__linha--4 {
     grid-template-columns: 1fr;
   }
 }

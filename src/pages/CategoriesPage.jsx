@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
+import { nomeCompletoCategoria } from '../lib/categorias'
 
 function MenuCategoria({
   podeSubcategoria,
@@ -275,7 +276,8 @@ export default function CategoriesPage() {
   const [visibilidade, setVisibilidade] = useState('casal')
   const [erro, setErro] = useState(null)
   const [padraoRegra, setPadraoRegra] = useState('')
-  const [categoriaRegra, setCategoriaRegra] = useState('')
+  const [categoriaRegraTopoId, setCategoriaRegraTopoId] = useState('')
+  const [categoriaRegraSubId, setCategoriaRegraSubId] = useState('')
   const [erroRegra, setErroRegra] = useState(null)
 
   async function submeter(e) {
@@ -334,9 +336,10 @@ export default function CategoriesPage() {
     e.preventDefault()
     setErroRegra(null)
 
+    const categoriaId = categoriaRegraSubId || categoriaRegraTopoId
     const { error } = await supabase
       .from('category_rules')
-      .insert({ household_id: household.id, padrao: padraoRegra, categoria_id: categoriaRegra })
+      .insert({ household_id: household.id, padrao: padraoRegra, categoria_id: categoriaId })
 
     if (error) {
       setErroRegra(error.message)
@@ -344,7 +347,8 @@ export default function CategoriesPage() {
     }
 
     setPadraoRegra('')
-    setCategoriaRegra('')
+    setCategoriaRegraTopoId('')
+    setCategoriaRegraSubId('')
     atualizar()
   }
 
@@ -359,6 +363,7 @@ export default function CategoriesPage() {
   // categoria-mãe pode ser própria ou predefinida — as subcategorias criadas são sempre próprias
   const possiveisMae = categorias.filter((c) => !c.parent_id)
   const subDe = (paiId) => categorias.filter((c) => c.parent_id === paiId)
+  const subcategoriasDaRegra = subDe(categoriaRegraTopoId)
 
   return (
     <div>
@@ -489,15 +494,35 @@ export default function CategoriesPage() {
           </label>
           <label>
             Categoria a sugerir
-            <select value={categoriaRegra} onChange={(e) => setCategoriaRegra(e.target.value)} required>
+            <select
+              value={categoriaRegraTopoId}
+              onChange={(e) => {
+                setCategoriaRegraTopoId(e.target.value)
+                setCategoriaRegraSubId('')
+              }}
+              required
+            >
               <option value="">Escolher categoria</option>
-              {categorias.map((c) => (
+              {possiveisMae.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nome}
                 </option>
               ))}
             </select>
           </label>
+          {subcategoriasDaRegra.length > 0 && (
+            <label>
+              Subcategoria
+              <select value={categoriaRegraSubId} onChange={(e) => setCategoriaRegraSubId(e.target.value)}>
+                <option value="">Nenhuma (categoria geral)</option>
+                {subcategoriasDaRegra.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         {erroRegra && <p className="erro">{erroRegra}</p>}
@@ -514,10 +539,9 @@ export default function CategoriesPage() {
       ) : (
         <ul className="categoria-lista">
           {regras.map((r) => {
-            const categoria = categorias.find((c) => c.id === r.categoria_id)
             return (
               <li key={r.id}>
-                "{r.padrao}" → {categoria?.nome ?? '—'}
+                "{r.padrao}" → {nomeCompletoCategoria(categorias, r.categoria_id) ?? '—'}
                 <button type="button" className="botao-link" onClick={() => apagarRegra(r.id)}>
                   Apagar
                 </button>
