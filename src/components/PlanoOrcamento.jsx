@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import LinhasPlano from './LinhasPlano.jsx'
 import ResumoPlano from './ResumoPlano.jsx'
-import { somaLiquidos, percentualMembro, valorTransferir, totalItems } from '../lib/orcamentoPlano'
+import { somaLiquidos, percentualMembro, valorTransferir, totalItems, agruparValoresPorCategoria } from '../lib/orcamentoPlano'
 
-// eslint-disable-next-line no-unused-vars -- onLimitesAplicados é usado pela Tarefa 6
 export default function PlanoOrcamento({ household, categorias, onLimitesAplicados }) {
   const [membros, setMembros] = useState([])
   const [planos, setPlanos] = useState([])
@@ -144,6 +143,54 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
   async function apagarItem(id) {
     await supabase.from('budget_plan_items').delete().eq('id', id)
     setItems((prev) => prev.filter((i) => i.id !== id))
+  }
+
+  const [mensagemAplicado, setMensagemAplicado] = useState(null)
+
+  async function aplicarLimites() {
+    setErro(null)
+    setMensagemAplicado(null)
+
+    const somas = agruparValoresPorCategoria(items)
+    const categoriaIds = Object.keys(somas)
+
+    if (categoriaIds.length === 0) {
+      setErro('O plano ainda não tem nenhuma linha com categoria.')
+      return
+    }
+
+    const { data: existentes, error: erroSelect } = await supabase
+      .from('budgets')
+      .select('id, categoria_id')
+      .eq('household_id', household.id)
+      .eq('tipo', 'mensal')
+      .in('categoria_id', categoriaIds)
+
+    if (erroSelect) {
+      setErro(erroSelect.message)
+      return
+    }
+
+    const existentePorCategoria = Object.fromEntries((existentes ?? []).map((b) => [b.categoria_id, b.id]))
+
+    const inserts = []
+    for (const categoriaId of categoriaIds) {
+      if (!existentePorCategoria[categoriaId]) {
+        inserts.push({ household_id: household.id, tipo: 'mensal', categoria_id: categoriaId, limite_mensal: somas[categoriaId] })
+      }
+    }
+
+    const updates = categoriaIds
+      .filter((categoriaId) => existentePorCategoria[categoriaId])
+      .map((categoriaId) =>
+        supabase.from('budgets').update({ limite_mensal: somas[categoriaId] }).eq('id', existentePorCategoria[categoriaId])
+      )
+
+    if (updates.length > 0) await Promise.all(updates)
+    if (inserts.length > 0) await supabase.from('budgets').insert(inserts)
+
+    setMensagemAplicado('Limites por categoria atualizados a partir deste plano.')
+    onLimitesAplicados?.()
   }
 
   if (planos.length === 0 && !formNovoAberto) {
@@ -327,6 +374,13 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
           ))}
 
           <ResumoPlano membros={membros} incomes={incomes} items={items} />
+
+          <div className="plano-orcamento__acoes">
+            <button type="button" className="botao-primario" onClick={aplicarLimites}>
+              Aplicar limites ao Orçamento
+            </button>
+            {mensagemAplicado && <p className="sucesso">{mensagemAplicado}</p>}
+          </div>
         </>
       )}
     </section>
