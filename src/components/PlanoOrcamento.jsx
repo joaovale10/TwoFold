@@ -186,8 +186,14 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
         supabase.from('budgets').update({ limite_mensal: somas[categoriaId] }).eq('id', existentePorCategoria[categoriaId])
       )
 
-    if (updates.length > 0) await Promise.all(updates)
-    if (inserts.length > 0) await supabase.from('budgets').insert(inserts)
+    const resultadosUpdate = updates.length > 0 ? await Promise.all(updates) : []
+    const erroInsert = inserts.length > 0 ? (await supabase.from('budgets').insert(inserts)).error : null
+    const erroUpdate = resultadosUpdate.find((r) => r.error)?.error
+
+    if (erroUpdate || erroInsert) {
+      setErro((erroUpdate ?? erroInsert).message)
+      return
+    }
 
     setMensagemAplicado('Limites por categoria atualizados a partir deste plano.')
     onLimitesAplicados?.()
