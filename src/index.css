@@ -1322,3 +1322,14 @@ input[type='color']::-webkit-color-swatch {
   font-family: inherit;
   resize: vertical;
 }
+
+.plano-orcamento__secao {
+  margin: 1.5rem 0;
+}
+
+.plano-orcamento__secao h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
