@@ -304,6 +304,45 @@ $$;
 
 grant execute on function apagar_categoria(uuid) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- Plano de Orçamento: rendimentos + linhas de despesa (conta comum e
+-- individuais) por plano, para estabelecer os limites por categoria em
+-- `budgets`. Um household pode ter vários planos (histórico por mês/data).
+-- ---------------------------------------------------------------------------
+create table budget_plans (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households (id) on delete cascade,
+  titulo text not null,
+  notas text,
+  created_at timestamptz not null default now()
+);
+
+create table budget_plan_incomes (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households (id) on delete cascade,
+  plan_id uuid not null references budget_plans (id) on delete cascade,
+  user_id uuid not null,
+  liquido numeric(12, 2) not null default 0,
+  subsidio_valor numeric(12, 2),
+  subsidio_nota text,
+  percentual_manual numeric(5, 2),
+  unique (plan_id, user_id)
+);
+
+create table budget_plan_items (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households (id) on delete cascade,
+  plan_id uuid not null references budget_plans (id) on delete cascade,
+  secao text not null check (secao in ('comum', 'individual')),
+  user_id uuid,
+  descricao text not null,
+  valor numeric(12, 2) not null check (valor > 0),
+  categoria_id uuid not null references categories (id),
+  poupanca boolean not null default false,
+  check (secao = 'individual' or (user_id is null and not poupanca)),
+  check (secao = 'comum' or user_id is not null)
+);
+
 -- Só o admin cria espaços novos (amigo solteiro ou 1º membro de um casal).
 create or replace function admin_criar_espaco(p_nome text, p_email text)
 returns text
@@ -457,6 +496,9 @@ alter table fixed_expenses enable row level security;
 alter table savings_goals enable row level security;
 alter table category_rules enable row level security;
 alter table household_invites enable row level security;
+alter table budget_plans enable row level security;
+alter table budget_plan_incomes enable row level security;
+alter table budget_plan_items enable row level security;
 
 create policy "membros veem o seu household"
   on households for select
@@ -564,6 +606,21 @@ create policy "membros gerem regras de categorização do household"
 
 create policy "membros gerem despesas fixas do household"
   on fixed_expenses for all
+  using (is_household_member(household_id))
+  with check (is_household_member(household_id));
+
+create policy "membros gerem planos de orçamento do household"
+  on budget_plans for all
+  using (is_household_member(household_id))
+  with check (is_household_member(household_id));
+
+create policy "membros gerem rendimentos do plano do household"
+  on budget_plan_incomes for all
+  using (is_household_member(household_id))
+  with check (is_household_member(household_id));
+
+create policy "membros gerem linhas do plano do household"
+  on budget_plan_items for all
   using (is_household_member(household_id))
   with check (is_household_member(household_id));
 
