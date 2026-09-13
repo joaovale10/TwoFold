@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import LinhasPlano from './LinhasPlano.jsx'
+import ResumoPlano from './ResumoPlano.jsx'
 import { somaLiquidos, percentualMembro, valorTransferir, totalItems } from '../lib/orcamentoPlano'
 
 // eslint-disable-next-line no-unused-vars -- onLimitesAplicados é usado pela Tarefa 6
@@ -324,6 +325,8 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
               onApagar={apagarItem}
             />
           ))}
+
+          <ResumoPlano membros={membros} incomes={incomes} items={items} />
         </>
       )}
     </section>
