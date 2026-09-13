@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import LinhasPlano from './LinhasPlano.jsx'
+import { somaLiquidos, percentualMembro, valorTransferir, totalItems } from '../lib/orcamentoPlano'
 
 // eslint-disable-next-line no-unused-vars -- onLimitesAplicados é usado pela Tarefa 6
 export default function PlanoOrcamento({ household, categorias, onLimitesAplicados }) {
@@ -14,7 +16,6 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
   const [formNovoAberto, setFormNovoAberto] = useState(false)
   const [erro, setErro] = useState(null)
 
-  // eslint-disable-next-line no-unused-vars -- usado pela Tarefa 4 para as linhas de despesa
   const categoriasDespesa = categorias.filter((c) => c.tipo === 'despesa')
 
   async function carregarMembros() {
@@ -123,6 +124,25 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
   async function guardarIncome(id, campos) {
     await supabase.from('budget_plan_incomes').update(campos).eq('id', id)
     setIncomes((prev) => prev.map((i) => (i.id === id ? { ...i, ...campos } : i)))
+  }
+
+  async function adicionarItem(dados) {
+    const { data } = await supabase
+      .from('budget_plan_items')
+      .insert({ household_id: household.id, plan_id: plano.id, ...dados })
+      .select()
+      .single()
+    if (data) setItems((prev) => [...prev, data])
+  }
+
+  async function editarItem(id, dados) {
+    await supabase.from('budget_plan_items').update(dados).eq('id', id)
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...dados } : i)))
+  }
+
+  async function apagarItem(id) {
+    await supabase.from('budget_plan_items').delete().eq('id', id)
+    setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
   if (planos.length === 0 && !formNovoAberto) {
@@ -240,6 +260,70 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
               </tbody>
             </table>
           </div>
+
+          <LinhasPlano
+            titulo="Conta Comum"
+            items={items.filter((i) => i.secao === 'comum')}
+            categoriasDespesa={categoriasDespesa}
+            mostrarPoupanca={false}
+            onAdicionar={(dados) => adicionarItem({ secao: 'comum', user_id: null, ...dados })}
+            onEditar={editarItem}
+            onApagar={apagarItem}
+          />
+
+          <div className="transaction-list__wrap">
+            <table className="transaction-list">
+              <thead>
+                <tr>
+                  <th>Transferência</th>
+                  <th>%</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incomes.map((income) => {
+                  const membro = membros.find((m) => m.user_id === income.user_id)
+                  const soma = somaLiquidos(incomes)
+                  const totalComum = totalItems(items.filter((i) => i.secao === 'comum'))
+                  const percentual = percentualMembro(income, soma)
+                  const transferir = valorTransferir(income, totalComum, soma)
+                  return (
+                    <tr key={income.id}>
+                      <td>{membro?.nome ?? '—'}</td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="auto"
+                          defaultValue={income.percentual_manual ?? ''}
+                          onBlur={(e) =>
+                            guardarIncome(income.id, {
+                              percentual_manual: e.target.value === '' ? null : Number(e.target.value),
+                            })
+                          }
+                        />
+                        {' '}({percentual.toFixed(1)}%)
+                      </td>
+                      <td>{transferir.toFixed(2)} €</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {membros.map((membro) => (
+            <LinhasPlano
+              key={membro.user_id}
+              titulo={`Despesas Individuais — ${membro.nome}`}
+              items={items.filter((i) => i.secao === 'individual' && i.user_id === membro.user_id)}
+              categoriasDespesa={categoriasDespesa}
+              mostrarPoupanca
+              onAdicionar={(dados) => adicionarItem({ secao: 'individual', user_id: membro.user_id, ...dados })}
+              onEditar={editarItem}
+              onApagar={apagarItem}
+            />
+          ))}
         </>
       )}
     </section>
