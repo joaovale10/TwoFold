@@ -1294,3 +1294,31 @@ input[type='color']::-webkit-color-swatch {
   border-radius: 999px;
   transition: width 0.3s ease;
 }
+
+.plano-orcamento {
+  margin-bottom: 2rem;
+}
+
+.plano-orcamento__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.plano-orcamento__notas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 1rem 0;
+}
+
+.plano-orcamento__notas textarea {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  resize: vertical;
+}
