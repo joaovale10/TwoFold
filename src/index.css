@@ -1340,11 +1340,8 @@ input[type='color']::-webkit-color-swatch {
   margin: 1.5rem 0;
 }
 
-.plano-orcamento__secao h3 {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
+.plano-orcamento__secao > .botao-primario {
+  margin-top: 0.75rem;
 }
 
 .plano-orcamento__acoes {

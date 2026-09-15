@@ -78,8 +78,7 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, mostrarPagador,
   )
 }
 
-export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onAdicionar, onEditar, onApagar }) {
-  const [editandoId, setEditandoId] = useState(null)
+function ModalNovaLinha({ titulo, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onAdicionar, onFechar }) {
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
@@ -87,7 +86,6 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
   const [pagadorId, setPagadorId] = useState('')
   const [erro, setErro] = useState(null)
 
-  const total = items.reduce((soma, i) => soma + Number(i.valor), 0)
   const numColunas = 3 + (mostrarPagador ? 1 : 0) + (mostrarPoupanca ? 1 : 0)
 
   function adicionar(e) {
@@ -104,18 +102,79 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
     const dados = { descricao, valor: Number(valor), categoria_id: categoriaId, poupanca }
     if (mostrarPagador) dados.user_id = pagadorId
     onAdicionar(dados)
-    setDescricao('')
-    setValor('')
-    setCategoriaId('')
-    setPoupanca(false)
-    setPagadorId('')
+    onFechar()
   }
 
   return (
+    <div className="categoria-modal-fundo" onClick={onFechar}>
+      <div className="categoria-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="categoria-modal__cabecalho">
+          <h2>{titulo}</h2>
+          <button type="button" className="botao-link" aria-label="Fechar" onClick={onFechar}>
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={adicionar} className="nova-transacao">
+          <div className={`nova-transacao__linha nova-transacao__linha--${numColunas}`}>
+            <label>
+              Descrição
+              <input value={descricao} onChange={(e) => setDescricao(e.target.value)} required autoFocus />
+            </label>
+            <label>
+              Valor
+              <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+            </label>
+            <label>
+              Categoria
+              <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
+                <option value="">Escolher categoria</option>
+                {categoriasDespesa.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {mostrarPagador && (
+              <label>
+                Quem paga
+                <select value={pagadorId} onChange={(e) => setPagadorId(e.target.value)} required>
+                  <option value="">Escolher</option>
+                  {membros.map((m) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {mostrarPoupanca && (
+              <label className="nova-transacao__linha__campo--checkbox">
+                <input type="checkbox" checked={poupanca} onChange={(e) => setPoupanca(e.target.checked)} />
+                É poupança
+              </label>
+            )}
+          </div>
+          {erro && <p className="erro">{erro}</p>}
+          <div className="nova-transacao__acoes">
+            <button type="submit" className="botao-primario">
+              Adicionar linha
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onAdicionar, onEditar, onApagar }) {
+  const [editandoId, setEditandoId] = useState(null)
+  const [modalAberto, setModalAberto] = useState(false)
+
+  return (
     <div className="plano-orcamento__secao">
-      <h3>
-        {titulo} — <span>{total.toFixed(2)} €</span>
-      </h3>
+      <h3>{titulo}</h3>
 
       {items.length > 0 && (
         <div className="transaction-list__wrap">
@@ -169,54 +228,21 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
         </div>
       )}
 
-      <form onSubmit={adicionar} className="nova-transacao">
-        <div className={`nova-transacao__linha nova-transacao__linha--${numColunas}`}>
-          <label>
-            Descrição
-            <input value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
-          </label>
-          <label>
-            Valor
-            <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-          </label>
-          <label>
-            Categoria
-            <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
-              <option value="">Escolher categoria</option>
-              {categoriasDespesa.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          {mostrarPagador && (
-            <label>
-              Quem paga
-              <select value={pagadorId} onChange={(e) => setPagadorId(e.target.value)} required>
-                <option value="">Escolher</option>
-                {membros.map((m) => (
-                  <option key={m.user_id} value={m.user_id}>
-                    {m.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {mostrarPoupanca && (
-            <label className="nova-transacao__linha__campo--checkbox">
-              <input type="checkbox" checked={poupanca} onChange={(e) => setPoupanca(e.target.checked)} />
-              É poupança
-            </label>
-          )}
-        </div>
-        {erro && <p className="erro">{erro}</p>}
-        <div className="nova-transacao__acoes">
-          <button type="submit" className="botao-primario">
-            Adicionar linha
-          </button>
-        </div>
-      </form>
+      <button type="button" className="botao-primario" onClick={() => setModalAberto(true)}>
+        + Adicionar linha
+      </button>
+
+      {modalAberto && (
+        <ModalNovaLinha
+          titulo={titulo}
+          categoriasDespesa={categoriasDespesa}
+          mostrarPoupanca={mostrarPoupanca}
+          mostrarPagador={mostrarPagador}
+          membros={membros}
+          onAdicionar={onAdicionar}
+          onFechar={() => setModalAberto(false)}
+        />
+      )}
     </div>
   )
 }
