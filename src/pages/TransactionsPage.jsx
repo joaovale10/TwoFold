@@ -109,7 +109,8 @@ export default function TransactionsPage() {
     if (!termo) return true
     return (
       (tx.descricao ?? '').toLowerCase().includes(termo) ||
-      (tx.categories?.nome ?? '').toLowerCase().includes(termo)
+      (tx.categories?.nome ?? '').toLowerCase().includes(termo) ||
+      (tx.etiqueta ?? '').toLowerCase().includes(termo)
     )
   })
 

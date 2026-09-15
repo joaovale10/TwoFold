@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { nivelDaCategoria } from '../lib/categorias'
 
@@ -19,9 +19,24 @@ export default function TransactionForm({
   const [contaDestinoId, setContaDestinoId] = useState('')
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [descricao, setDescricao] = useState('')
+  const [etiqueta, setEtiqueta] = useState('')
+  const [etiquetasExistentes, setEtiquetasExistentes] = useState([])
   const [aEnviar, setAEnviar] = useState(false)
   const [erro, setErro] = useState(null)
   const [sucesso, setSucesso] = useState(false)
+
+  useEffect(() => {
+    async function carregarEtiquetas() {
+      const { data: linhas } = await supabase
+        .from('transactions')
+        .select('etiqueta')
+        .eq('household_id', householdId)
+        .not('etiqueta', 'is', null)
+      const unicas = [...new Set((linhas ?? []).map((l) => l.etiqueta))].sort()
+      setEtiquetasExistentes(unicas)
+    }
+    carregarEtiquetas()
+  }, [householdId])
 
   const categoriasDoTipo = categories.filter((c) => c.tipo === tipo)
   const categoriasTopoDoTipo = categoriasDoTipo.filter((c) => !c.parent_id)
@@ -60,6 +75,7 @@ export default function TransactionForm({
             valor: Number(valor),
             data,
             descricao,
+            etiqueta: etiqueta.trim() || null,
           }
         : {
             household_id: householdId,
@@ -70,6 +86,7 @@ export default function TransactionForm({
             categoria_id: categoriaId || null,
             data,
             descricao,
+            etiqueta: etiqueta.trim() || null,
           }
 
     const { error } = await supabase.from('transactions').insert(payload)
@@ -87,6 +104,7 @@ export default function TransactionForm({
     setCategoriaSubId('')
     setContaDestinoId('')
     setData(new Date().toISOString().slice(0, 10))
+    setEtiqueta('')
     setSucesso(true)
     setTimeout(() => setSucesso(false), 2500)
     onCriada()
@@ -99,6 +117,7 @@ export default function TransactionForm({
     setCategoriaSubId('')
     setContaDestinoId('')
     setData(new Date().toISOString().slice(0, 10))
+    setEtiqueta('')
     setErro(null)
   }
 
@@ -120,7 +139,7 @@ export default function TransactionForm({
         </button>
       </div>
 
-      <div className="nova-transacao__linha nova-transacao__linha--2">
+      <div className="nova-transacao__linha nova-transacao__linha--3">
         <label>
           Valor
           <input
@@ -141,6 +160,21 @@ export default function TransactionForm({
             value={descricao}
             onChange={(e) => alterarDescricao(e.target.value)}
           />
+        </label>
+        <label>
+          Etiqueta
+          <input
+            type="text"
+            list="etiquetas-existentes"
+            placeholder="Ex: Férias Cabo Verde"
+            value={etiqueta}
+            onChange={(e) => setEtiqueta(e.target.value)}
+          />
+          <datalist id="etiquetas-existentes">
+            {etiquetasExistentes.map((e) => (
+              <option key={e} value={e} />
+            ))}
+          </datalist>
         </label>
       </div>
 

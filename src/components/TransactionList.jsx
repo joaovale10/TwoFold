@@ -11,6 +11,7 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
   const [categoriaTopoId, setCategoriaTopoId] = useState(nivelInicial.topoId)
   const [categoriaSubId, setCategoriaSubId] = useState(nivelInicial.subId)
   const [valor, setValor] = useState(String(tx.valor))
+  const [etiqueta, setEtiqueta] = useState(tx.etiqueta ?? '')
   const [erro, setErro] = useState(null)
 
   const subcategoriasDaTopo = categoriasDoTipo.filter((c) => c.parent_id === categoriaTopoId)
@@ -20,10 +21,11 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
     e.preventDefault()
     setErro(null)
 
+    const etiquetaFinal = etiqueta.trim() || null
     const payload =
       tx.tipo === 'transferencia'
-        ? { data, descricao, valor: Number(valor) }
-        : { data, descricao, valor: Number(valor), categoria_id: categoriaId || null }
+        ? { data, descricao, valor: Number(valor), etiqueta: etiquetaFinal }
+        : { data, descricao, valor: Number(valor), categoria_id: categoriaId || null, etiqueta: etiquetaFinal }
 
     const { error } = await supabase.from('transactions').update(payload).eq('id', tx.id)
 
@@ -80,6 +82,9 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
         <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
       </td>
       <td>
+        <input value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Ex: Férias" />
+      </td>
+      <td>
         <button type="button" className="botao-link" onClick={guardar}>
           Guardar
         </button>
@@ -127,6 +132,7 @@ export default function TransactionList({ transactions, categorias = [], contaEm
           <th>Categoria</th>
           <th>Conta</th>
           <th>Valor</th>
+          <th>Etiqueta</th>
           {onAtualizado && <th>Ações</th>}
         </tr>
       </thead>
@@ -164,6 +170,7 @@ export default function TransactionList({ transactions, categorias = [], contaEm
                 {sinal}
                 {Number(tx.valor).toFixed(2)} €
               </td>
+              <td>{tx.etiqueta || '—'}</td>
               {onAtualizado && (
                 <td>
                   <button type="button" className="botao-link" onClick={() => setEditandoId(tx.id)}>

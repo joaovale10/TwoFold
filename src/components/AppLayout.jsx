@@ -14,6 +14,7 @@ const LINKS = [
   { to: '/categorias', label: 'Categorias' },
   { to: '/despesas-fixas', label: 'Despesas Fixas' },
   { to: '/objetivos', label: 'Objetivos' },
+  { to: '/etiquetas', label: 'Por Etiqueta' },
 ]
 
 const ORCAMENTO_LINKS = [

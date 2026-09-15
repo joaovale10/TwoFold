@@ -19,6 +19,7 @@ import FixedExpensesPage from './pages/FixedExpensesPage.jsx'
 import BudgetsPage from './pages/BudgetsPage.jsx'
 import GoalsPage from './pages/GoalsPage.jsx'
 import StatsPage from './pages/StatsPage.jsx'
+import TagsPage from './pages/TagsPage.jsx'
 
 function EspacoPrivado() {
   const { user, session, loading, signOut } = useAuth()
@@ -114,6 +115,7 @@ export default function App() {
         <Route path="despesas-fixas" element={<FixedExpensesPage />} />
         <Route path="orcamentos/:tipo" element={<BudgetsPage />} />
         <Route path="objetivos" element={<GoalsPage />} />
+        <Route path="etiquetas" element={<TagsPage />} />
         <Route path="convites" element={<ConvitesPage />} />
         <Route path="conta" element={<ContaPage />} />
         <Route path="ajuda" element={<AjudaPage />} />

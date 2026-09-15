@@ -133,6 +133,7 @@ create table transactions (
   categoria_id uuid references categories (id),
   data date not null default current_date,
   descricao text,
+  etiqueta text, -- rótulo livre (ex: "Férias Cabo Verde"), cruza categorias
   created_at timestamptz not null default now(),
   apagada_em timestamptz, -- soft-delete: not null = apagada, fica de fora das somas mas recuperável
   constraint transactions_transferencia_valida check (
