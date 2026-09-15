@@ -571,15 +571,12 @@ select {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
-.nova-transacao__linha--4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-
+.nova-transacao__linha--4,
 .nova-transacao__linha--5 {
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .nova-transacao__linha--2,
   .nova-transacao__linha--3,
   .nova-transacao__linha--4,
@@ -594,6 +591,17 @@ select {
   gap: 0.35rem;
   font-size: 0.85rem;
   color: var(--ink-soft);
+  min-width: 0;
+}
+
+.nova-transacao__linha__campo--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nova-transacao__linha__campo--checkbox input {
+  width: auto;
 }
 
 .nova-transacao__linha input,

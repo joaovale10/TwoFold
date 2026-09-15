@@ -204,14 +204,9 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
             </label>
           )}
           {mostrarPoupanca && (
-            <label>
+            <label className="nova-transacao__linha__campo--checkbox">
+              <input type="checkbox" checked={poupanca} onChange={(e) => setPoupanca(e.target.checked)} />
               É poupança
-              <input
-                type="checkbox"
-                checked={poupanca}
-                onChange={(e) => setPoupanca(e.target.checked)}
-                style={{ width: 'auto', alignSelf: 'flex-start' }}
-              />
             </label>
           )}
         </div>
