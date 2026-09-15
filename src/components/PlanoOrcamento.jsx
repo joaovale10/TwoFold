@@ -435,18 +435,17 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
             </table>
           </div>
 
-          {membros.map((membro) => (
-            <LinhasPlano
-              key={membro.user_id}
-              titulo={`Despesas Individuais — ${membro.nome}`}
-              items={items.filter((i) => i.secao === 'individual' && i.user_id === membro.user_id)}
-              categoriasDespesa={categoriasDespesa}
-              mostrarPoupanca
-              onAdicionar={(dados) => adicionarItem({ secao: 'individual', user_id: membro.user_id, ...dados })}
-              onEditar={editarItem}
-              onApagar={apagarItem}
-            />
-          ))}
+          <LinhasPlano
+            titulo="Despesas Individuais"
+            items={items.filter((i) => i.secao === 'individual')}
+            categoriasDespesa={categoriasDespesa}
+            mostrarPoupanca
+            mostrarPagador
+            membros={membros}
+            onAdicionar={(dados) => adicionarItem({ secao: 'individual', ...dados })}
+            onEditar={editarItem}
+            onApagar={apagarItem}
+          />
 
           <ResumoPlano membros={membros} incomes={incomes} items={items} />
 

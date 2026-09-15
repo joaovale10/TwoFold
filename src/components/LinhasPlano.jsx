@@ -1,10 +1,11 @@
 import { useState } from 'react'
 
-function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCancelar }) {
+function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onGuardar, onCancelar }) {
   const [descricao, setDescricao] = useState(item.descricao)
   const [valor, setValor] = useState(String(item.valor))
   const [categoriaId, setCategoriaId] = useState(item.categoria_id)
   const [poupanca, setPoupanca] = useState(item.poupanca)
+  const [pagadorId, setPagadorId] = useState(item.user_id ?? '')
   const [erro, setErro] = useState(null)
 
   function guardar(e) {
@@ -21,7 +22,13 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCa
       setErro('Escolhe uma categoria.')
       return
     }
-    onGuardar(item.id, { descricao, valor: Number(valor), categoria_id: categoriaId, poupanca })
+    if (mostrarPagador && !pagadorId) {
+      setErro('Escolhe quem paga.')
+      return
+    }
+    const dados = { descricao, valor: Number(valor), categoria_id: categoriaId, poupanca }
+    if (mostrarPagador) dados.user_id = pagadorId
+    onGuardar(item.id, dados)
   }
 
   return (
@@ -41,6 +48,18 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCa
           ))}
         </select>
       </td>
+      {mostrarPagador && (
+        <td>
+          <select value={pagadorId} onChange={(e) => setPagadorId(e.target.value)} required>
+            <option value="">Quem paga</option>
+            {membros.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.nome}
+              </option>
+            ))}
+          </select>
+        </td>
+      )}
       {mostrarPoupanca && (
         <td>
           <input type="checkbox" checked={poupanca} onChange={(e) => setPoupanca(e.target.checked)} />
@@ -59,15 +78,17 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCa
   )
 }
 
-export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarPoupanca, onAdicionar, onEditar, onApagar }) {
+export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onAdicionar, onEditar, onApagar }) {
   const [editandoId, setEditandoId] = useState(null)
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
   const [poupanca, setPoupanca] = useState(false)
+  const [pagadorId, setPagadorId] = useState('')
   const [erro, setErro] = useState(null)
 
   const total = items.reduce((soma, i) => soma + Number(i.valor), 0)
+  const numColunas = 3 + (mostrarPagador ? 1 : 0) + (mostrarPoupanca ? 1 : 0)
 
   function adicionar(e) {
     e.preventDefault()
@@ -76,11 +97,18 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
       setErro('Escolhe uma categoria.')
       return
     }
-    onAdicionar({ descricao, valor: Number(valor), categoria_id: categoriaId, poupanca })
+    if (mostrarPagador && !pagadorId) {
+      setErro('Escolhe quem paga.')
+      return
+    }
+    const dados = { descricao, valor: Number(valor), categoria_id: categoriaId, poupanca }
+    if (mostrarPagador) dados.user_id = pagadorId
+    onAdicionar(dados)
     setDescricao('')
     setValor('')
     setCategoriaId('')
     setPoupanca(false)
+    setPagadorId('')
   }
 
   return (
@@ -97,6 +125,7 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
                 <th>Descrição</th>
                 <th>Valor</th>
                 <th>Categoria</th>
+                {mostrarPagador && <th>Quem paga</th>}
                 {mostrarPoupanca && <th>Poupança</th>}
                 <th>Ações</th>
               </tr>
@@ -109,6 +138,8 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
                     item={item}
                     categoriasDespesa={categoriasDespesa}
                     mostrarPoupanca={mostrarPoupanca}
+                    mostrarPagador={mostrarPagador}
+                    membros={membros}
                     onGuardar={(id, dados) => {
                       onEditar(id, dados)
                       setEditandoId(null)
@@ -120,6 +151,7 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
                     <td>{item.descricao}</td>
                     <td>{Number(item.valor).toFixed(2)} €</td>
                     <td>{categoriasDespesa.find((c) => c.id === item.categoria_id)?.nome ?? '—'}</td>
+                    {mostrarPagador && <td>{membros.find((m) => m.user_id === item.user_id)?.nome ?? '—'}</td>}
                     {mostrarPoupanca && <td>{item.poupanca ? 'Sim' : '—'}</td>}
                     <td>
                       <button type="button" className="botao-link" onClick={() => setEditandoId(item.id)}>
@@ -138,7 +170,7 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
       )}
 
       <form onSubmit={adicionar} className="nova-transacao">
-        <div className={`nova-transacao__linha ${mostrarPoupanca ? 'nova-transacao__linha--4' : 'nova-transacao__linha--3'}`}>
+        <div className={`nova-transacao__linha nova-transacao__linha--${numColunas}`}>
           <label>
             Descrição
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
@@ -158,6 +190,19 @@ export default function LinhasPlano({ titulo, items, categoriasDespesa, mostrarP
               ))}
             </select>
           </label>
+          {mostrarPagador && (
+            <label>
+              Quem paga
+              <select value={pagadorId} onChange={(e) => setPagadorId(e.target.value)} required>
+                <option value="">Escolher</option>
+                {membros.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {mostrarPoupanca && (
             <label>
               É poupança
