@@ -5,9 +5,22 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCa
   const [valor, setValor] = useState(String(item.valor))
   const [categoriaId, setCategoriaId] = useState(item.categoria_id)
   const [poupanca, setPoupanca] = useState(item.poupanca)
+  const [erro, setErro] = useState(null)
 
   function guardar(e) {
     e.preventDefault()
+    if (!descricao.trim()) {
+      setErro('Indica uma descrição.')
+      return
+    }
+    if (!(Number(valor) > 0)) {
+      setErro('O valor tem de ser maior que zero.')
+      return
+    }
+    if (!categoriaId) {
+      setErro('Escolhe uma categoria.')
+      return
+    }
     onGuardar(item.id, { descricao, valor: Number(valor), categoria_id: categoriaId, poupanca })
   }
 
@@ -40,6 +53,7 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, onGuardar, onCa
         <button type="button" className="botao-link" onClick={onCancelar}>
           Cancelar
         </button>
+        {erro && <p className="erro">{erro}</p>}
       </td>
     </tr>
   )

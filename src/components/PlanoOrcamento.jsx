@@ -63,6 +63,28 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
     carregarPlanoSelecionado(planoId)
   }, [planoId])
 
+  useEffect(() => {
+    if (!plano || membros.length === 0) return
+    const membrosSemIncome = membros.filter((m) => !incomes.some((i) => i.user_id === m.user_id))
+    if (membrosSemIncome.length === 0) return
+
+    async function criarIncomesEmFalta() {
+      const novos = membrosSemIncome.map((m) => ({
+        household_id: household.id,
+        plan_id: plano.id,
+        user_id: m.user_id,
+        liquido: 0,
+      }))
+      const { data, error } = await supabase.from('budget_plan_incomes').insert(novos).select()
+      if (error) {
+        setErro(error.message)
+        return
+      }
+      if (data) setIncomes((prev) => [...prev, ...data])
+    }
+    criarIncomesEmFalta()
+  }, [plano, membros, incomes, household.id])
+
   async function criarPlano(e) {
     e.preventDefault()
     setErro(null)
@@ -98,8 +120,20 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
         categoria_id: i.categoria_id,
         poupanca: i.poupanca,
       }))
-      if (novosIncomes.length > 0) await supabase.from('budget_plan_incomes').insert(novosIncomes)
-      if (novosItems.length > 0) await supabase.from('budget_plan_items').insert(novosItems)
+      if (novosIncomes.length > 0) {
+        const { error: erroIncomes } = await supabase.from('budget_plan_incomes').insert(novosIncomes)
+        if (erroIncomes) {
+          setErro(erroIncomes.message)
+          return
+        }
+      }
+      if (novosItems.length > 0) {
+        const { error: erroItems } = await supabase.from('budget_plan_items').insert(novosItems)
+        if (erroItems) {
+          setErro(erroItems.message)
+          return
+        }
+      }
     } else {
       const novosIncomes = membros.map((m) => ({
         household_id: household.id,
@@ -107,7 +141,13 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
         user_id: m.user_id,
         liquido: 0,
       }))
-      if (novosIncomes.length > 0) await supabase.from('budget_plan_incomes').insert(novosIncomes)
+      if (novosIncomes.length > 0) {
+        const { error: erroIncomes } = await supabase.from('budget_plan_incomes').insert(novosIncomes)
+        if (erroIncomes) {
+          setErro(erroIncomes.message)
+          return
+        }
+      }
     }
 
     setTituloNovo('')
@@ -117,86 +157,113 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
   }
 
   async function guardarNotas(notas) {
-    await supabase.from('budget_plans').update({ notas }).eq('id', plano.id)
+    const { error } = await supabase.from('budget_plans').update({ notas }).eq('id', plano.id)
+    if (error) {
+      setErro(error.message)
+      return
+    }
     setPlano((p) => ({ ...p, notas }))
   }
 
   async function guardarIncome(id, campos) {
-    await supabase.from('budget_plan_incomes').update(campos).eq('id', id)
+    const { error } = await supabase.from('budget_plan_incomes').update(campos).eq('id', id)
+    if (error) {
+      setErro(error.message)
+      return
+    }
     setIncomes((prev) => prev.map((i) => (i.id === id ? { ...i, ...campos } : i)))
   }
 
   async function adicionarItem(dados) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('budget_plan_items')
       .insert({ household_id: household.id, plan_id: plano.id, ...dados })
       .select()
       .single()
+    if (error) {
+      setErro(error.message)
+      return
+    }
     if (data) setItems((prev) => [...prev, data])
   }
 
   async function editarItem(id, dados) {
-    await supabase.from('budget_plan_items').update(dados).eq('id', id)
+    const { error } = await supabase.from('budget_plan_items').update(dados).eq('id', id)
+    if (error) {
+      setErro(error.message)
+      return
+    }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...dados } : i)))
   }
 
   async function apagarItem(id) {
-    await supabase.from('budget_plan_items').delete().eq('id', id)
+    const { error } = await supabase.from('budget_plan_items').delete().eq('id', id)
+    if (error) {
+      setErro(error.message)
+      return
+    }
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
   const [mensagemAplicado, setMensagemAplicado] = useState(null)
+  const [aplicando, setAplicando] = useState(false)
 
   async function aplicarLimites() {
+    if (aplicando) return
+    setAplicando(true)
     setErro(null)
     setMensagemAplicado(null)
 
-    const somas = agruparValoresPorCategoria(items)
-    const categoriaIds = Object.keys(somas)
+    try {
+      const somas = agruparValoresPorCategoria(items)
+      const categoriaIds = Object.keys(somas)
 
-    if (categoriaIds.length === 0) {
-      setErro('O plano ainda não tem nenhuma linha com categoria.')
-      return
-    }
-
-    const { data: existentes, error: erroSelect } = await supabase
-      .from('budgets')
-      .select('id, categoria_id')
-      .eq('household_id', household.id)
-      .eq('tipo', 'mensal')
-      .in('categoria_id', categoriaIds)
-
-    if (erroSelect) {
-      setErro(erroSelect.message)
-      return
-    }
-
-    const existentePorCategoria = Object.fromEntries((existentes ?? []).map((b) => [b.categoria_id, b.id]))
-
-    const inserts = []
-    for (const categoriaId of categoriaIds) {
-      if (!existentePorCategoria[categoriaId]) {
-        inserts.push({ household_id: household.id, tipo: 'mensal', categoria_id: categoriaId, limite_mensal: somas[categoriaId] })
+      if (categoriaIds.length === 0) {
+        setErro('O plano ainda não tem nenhuma linha com categoria.')
+        return
       }
+
+      const { data: existentes, error: erroSelect } = await supabase
+        .from('budgets')
+        .select('id, categoria_id')
+        .eq('household_id', household.id)
+        .eq('tipo', 'mensal')
+        .in('categoria_id', categoriaIds)
+
+      if (erroSelect) {
+        setErro(erroSelect.message)
+        return
+      }
+
+      const existentePorCategoria = Object.fromEntries((existentes ?? []).map((b) => [b.categoria_id, b.id]))
+
+      const inserts = []
+      for (const categoriaId of categoriaIds) {
+        if (!existentePorCategoria[categoriaId]) {
+          inserts.push({ household_id: household.id, tipo: 'mensal', categoria_id: categoriaId, limite_mensal: somas[categoriaId] })
+        }
+      }
+
+      const updates = categoriaIds
+        .filter((categoriaId) => existentePorCategoria[categoriaId])
+        .map((categoriaId) =>
+          supabase.from('budgets').update({ limite_mensal: somas[categoriaId] }).eq('id', existentePorCategoria[categoriaId])
+        )
+
+      const resultadosUpdate = updates.length > 0 ? await Promise.all(updates) : []
+      const erroInsert = inserts.length > 0 ? (await supabase.from('budgets').insert(inserts)).error : null
+      const erroUpdate = resultadosUpdate.find((r) => r.error)?.error
+
+      if (erroUpdate || erroInsert) {
+        setErro((erroUpdate ?? erroInsert).message)
+        return
+      }
+
+      setMensagemAplicado('Limites por categoria atualizados a partir deste plano.')
+      onLimitesAplicados?.()
+    } finally {
+      setAplicando(false)
     }
-
-    const updates = categoriaIds
-      .filter((categoriaId) => existentePorCategoria[categoriaId])
-      .map((categoriaId) =>
-        supabase.from('budgets').update({ limite_mensal: somas[categoriaId] }).eq('id', existentePorCategoria[categoriaId])
-      )
-
-    const resultadosUpdate = updates.length > 0 ? await Promise.all(updates) : []
-    const erroInsert = inserts.length > 0 ? (await supabase.from('budgets').insert(inserts)).error : null
-    const erroUpdate = resultadosUpdate.find((r) => r.error)?.error
-
-    if (erroUpdate || erroInsert) {
-      setErro((erroUpdate ?? erroInsert).message)
-      return
-    }
-
-    setMensagemAplicado('Limites por categoria atualizados a partir deste plano.')
-    onLimitesAplicados?.()
   }
 
   if (planos.length === 0 && !formNovoAberto) {
@@ -255,9 +322,11 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
 
       {plano && (
         <>
+          {erro && <p className="erro">{erro}</p>}
           <label className="plano-orcamento__notas">
             Notas
             <textarea
+              key={plano.id}
               defaultValue={plano.notas ?? ''}
               onBlur={(e) => guardarNotas(e.target.value)}
               rows={2}
@@ -382,8 +451,8 @@ export default function PlanoOrcamento({ household, categorias, onLimitesAplicad
           <ResumoPlano membros={membros} incomes={incomes} items={items} />
 
           <div className="plano-orcamento__acoes">
-            <button type="button" className="botao-primario" onClick={aplicarLimites}>
-              Aplicar limites ao Orçamento
+            <button type="button" className="botao-primario" onClick={aplicarLimites} disabled={aplicando}>
+              {aplicando ? 'A aplicar…' : 'Aplicar limites ao Orçamento'}
             </button>
             {mensagemAplicado && <p className="sucesso">{mensagemAplicado}</p>}
           </div>

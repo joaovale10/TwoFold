@@ -294,6 +294,7 @@ begin
 
   delete from category_rules where categoria_id = any(v_ids);
   delete from budgets where categoria_id = any(v_ids);
+  delete from budget_plan_items where categoria_id = any(v_ids);
   update fixed_expenses set categoria_id = null where categoria_id = any(v_ids);
   update transactions set categoria_id = null where categoria_id = any(v_ids);
 
