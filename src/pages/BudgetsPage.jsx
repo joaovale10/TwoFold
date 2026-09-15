@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import PlanoOrcamento from '../components/PlanoOrcamento.jsx'
 
 const TIPO_POR_ROTA = { mensais: 'mensal', anuais: 'anual' }
 
@@ -74,6 +75,10 @@ export default function BudgetsPage() {
   return (
     <div>
       <h1 className="titulo-centrado">{titulo}</h1>
+
+      {tipo === 'mensal' && (
+        <PlanoOrcamento household={household} categorias={categorias} onLimitesAplicados={carregar} />
+      )}
 
       <form onSubmit={submeter} className="nova-transacao">
         <div className="nova-transacao__linha nova-transacao__linha--2">

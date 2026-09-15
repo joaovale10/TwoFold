@@ -571,14 +571,16 @@ select {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
-.nova-transacao__linha--4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+.nova-transacao__linha--4,
+.nova-transacao__linha--5 {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .nova-transacao__linha--2,
   .nova-transacao__linha--3,
-  .nova-transacao__linha--4 {
+  .nova-transacao__linha--4,
+  .nova-transacao__linha--5 {
     grid-template-columns: 1fr;
   }
 }
@@ -589,6 +591,17 @@ select {
   gap: 0.35rem;
   font-size: 0.85rem;
   color: var(--ink-soft);
+  min-width: 0;
+}
+
+.nova-transacao__linha__campo--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nova-transacao__linha__campo--checkbox input {
+  width: auto;
 }
 
 .nova-transacao__linha input,
@@ -1293,4 +1306,47 @@ input[type='color']::-webkit-color-swatch {
   height: 100%;
   border-radius: 999px;
   transition: width 0.3s ease;
+}
+
+.plano-orcamento {
+  margin-bottom: 2rem;
+}
+
+.plano-orcamento__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.plano-orcamento__notas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 1rem 0;
+}
+
+.plano-orcamento__notas textarea {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.plano-orcamento__secao {
+  margin: 1.5rem 0;
+}
+
+.plano-orcamento__secao > .botao-primario {
+  margin-top: 0.75rem;
+}
+
+.plano-orcamento__acoes {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
