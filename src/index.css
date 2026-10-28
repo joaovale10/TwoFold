@@ -1177,6 +1177,14 @@ input[type='color']::-webkit-color-swatch {
 
 .categoria-seletor {
   width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;

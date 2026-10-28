@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
 import { nomeCompletoCategoria } from '../lib/categorias'
+import CategoriaSeletor from '../components/CategoriaSeletor'
 
 function MenuCategoria({
   podeSubcategoria,
@@ -276,8 +277,7 @@ export default function CategoriesPage() {
   const [visibilidade, setVisibilidade] = useState('casal')
   const [erro, setErro] = useState(null)
   const [padraoRegra, setPadraoRegra] = useState('')
-  const [categoriaRegraTopoId, setCategoriaRegraTopoId] = useState('')
-  const [categoriaRegraSubId, setCategoriaRegraSubId] = useState('')
+  const [categoriaRegraId, setCategoriaRegraId] = useState('')
   const [erroRegra, setErroRegra] = useState(null)
 
   async function submeter(e) {
@@ -336,7 +336,11 @@ export default function CategoriesPage() {
     e.preventDefault()
     setErroRegra(null)
 
-    const categoriaId = categoriaRegraSubId || categoriaRegraTopoId
+    const categoriaId = categoriaRegraId
+    if (!categoriaId) {
+      setErroRegra('Escolhe uma categoria.')
+      return
+    }
     const { error } = await supabase
       .from('category_rules')
       .insert({ household_id: household.id, padrao: padraoRegra, categoria_id: categoriaId })
@@ -347,8 +351,7 @@ export default function CategoriesPage() {
     }
 
     setPadraoRegra('')
-    setCategoriaRegraTopoId('')
-    setCategoriaRegraSubId('')
+    setCategoriaRegraId('')
     atualizar()
   }
 
@@ -363,7 +366,6 @@ export default function CategoriesPage() {
   // categoria-mãe pode ser própria ou predefinida — as subcategorias criadas são sempre próprias
   const possiveisMae = categorias.filter((c) => !c.parent_id)
   const subDe = (paiId) => categorias.filter((c) => c.parent_id === paiId)
-  const subcategoriasDaRegra = subDe(categoriaRegraTopoId)
 
   return (
     <div>
@@ -494,35 +496,8 @@ export default function CategoriesPage() {
           </label>
           <label>
             Categoria a sugerir
-            <select
-              value={categoriaRegraTopoId}
-              onChange={(e) => {
-                setCategoriaRegraTopoId(e.target.value)
-                setCategoriaRegraSubId('')
-              }}
-              required
-            >
-              <option value="">Escolher categoria</option>
-              {possiveisMae.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
+            <CategoriaSeletor categorias={categorias} value={categoriaRegraId} onChange={setCategoriaRegraId} />
           </label>
-          {subcategoriasDaRegra.length > 0 && (
-            <label>
-              Subcategoria
-              <select value={categoriaRegraSubId} onChange={(e) => setCategoriaRegraSubId(e.target.value)}>
-                <option value="">Nenhuma (categoria geral)</option>
-                {subcategoriasDaRegra.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
         </div>
 
         {erroRegra && <p className="erro">{erroRegra}</p>}

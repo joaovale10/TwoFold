@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import CategoriaSeletor from '../components/CategoriaSeletor'
 
 export default function FixedExpensesPage() {
   const { household, contas, categorias } = useOutletContext()
@@ -152,14 +153,7 @@ export default function FixedExpensesPage() {
         <div className="nova-transacao__linha nova-transacao__linha--2">
           <label>
             Categoria
-            <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
-              <option value="">Sem categoria</option>
-              {categoriasDespesa.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
+            <CategoriaSeletor categorias={categoriasDespesa} value={categoriaId} onChange={setCategoriaId} opcional />
           </label>
           <label>
             Dia do mês
@@ -215,17 +209,12 @@ export default function FixedExpensesPage() {
                     />
                   </td>
                   <td>
-                    <select
+                    <CategoriaSeletor
+                      categorias={categoriasDespesa}
                       value={edicao.categoria_id}
-                      onChange={(e) => setEdicao({ ...edicao, categoria_id: e.target.value })}
-                    >
-                      <option value="">Sem categoria</option>
-                      {categoriasDespesa.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(id) => setEdicao({ ...edicao, categoria_id: id })}
+                      opcional
+                    />
                   </td>
                   <td>
                     <select

@@ -1,21 +1,17 @@
 import { useState } from 'react'
+import CategoriaSeletor from './CategoriaSeletor'
 import { supabase } from '../lib/supabaseClient'
-import { nivelDaCategoria, nomeCompletoCategoria } from '../lib/categorias'
+import { nomeCompletoCategoria } from '../lib/categorias'
 
 function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
   const categoriasDoTipo = categorias.filter((c) => c.tipo === tx.tipo)
-  const categoriasTopoDoTipo = categoriasDoTipo.filter((c) => !c.parent_id)
   const [data, setData] = useState(tx.data)
   const [descricao, setDescricao] = useState(tx.descricao ?? '')
-  const nivelInicial = nivelDaCategoria(categorias, tx.categoria_id)
-  const [categoriaTopoId, setCategoriaTopoId] = useState(nivelInicial.topoId)
-  const [categoriaSubId, setCategoriaSubId] = useState(nivelInicial.subId)
+  const [categoriaId, setCategoriaId] = useState(tx.categoria_id ?? '')
   const [valor, setValor] = useState(String(tx.valor))
   const [etiqueta, setEtiqueta] = useState(tx.etiqueta ?? '')
   const [erro, setErro] = useState(null)
 
-  const subcategoriasDaTopo = categoriasDoTipo.filter((c) => c.parent_id === categoriaTopoId)
-  const categoriaId = categoriaSubId || categoriaTopoId
 
   async function guardar(e) {
     e.preventDefault()
@@ -49,32 +45,7 @@ function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
         {tx.tipo === 'transferencia' ? (
           '—'
         ) : (
-          <>
-            <select
-              value={categoriaTopoId}
-              onChange={(e) => {
-                setCategoriaTopoId(e.target.value)
-                setCategoriaSubId('')
-              }}
-            >
-              <option value="">Sem categoria</option>
-              {categoriasTopoDoTipo.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-            {subcategoriasDaTopo.length > 0 && (
-              <select value={categoriaSubId} onChange={(e) => setCategoriaSubId(e.target.value)}>
-                <option value="">Nenhuma</option>
-                {subcategoriasDaTopo.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            )}
-          </>
+          <CategoriaSeletor categorias={categoriasDoTipo} value={categoriaId} onChange={setCategoriaId} opcional />
         )}
       </td>
       <td>{tx.accounts?.nome}</td>
