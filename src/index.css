@@ -605,7 +605,8 @@ select {
 }
 
 .nova-transacao__linha input,
-.nova-transacao__linha select {
+.nova-transacao__linha select,
+.nova-transacao__linha .categoria-seletor {
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1177,10 +1178,13 @@ input[type='color']::-webkit-color-swatch {
 
 .categoria-seletor {
   width: 100%;
+  box-sizing: border-box;
+  appearance: none;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image: none;
   color: var(--ink);
   font-family: inherit;
   font-size: 0.95rem;
