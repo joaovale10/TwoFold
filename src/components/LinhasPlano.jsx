@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CategoriaSeletor from './CategoriaSeletor'
 
 function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, mostrarPagador, membros, onGuardar, onCancelar }) {
   const [descricao, setDescricao] = useState(item.descricao)
@@ -40,13 +41,7 @@ function LinhaEdicao({ item, categoriasDespesa, mostrarPoupanca, mostrarPagador,
         <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
       </td>
       <td>
-        <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
-          {categoriasDespesa.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
+        <CategoriaSeletor categorias={categoriasDespesa} value={categoriaId} onChange={setCategoriaId} />
       </td>
       {mostrarPagador && (
         <td>
@@ -127,14 +122,7 @@ function ModalNovaLinha({ titulo, categoriasDespesa, mostrarPoupanca, mostrarPag
             </label>
             <label>
               Categoria
-              <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
-                <option value="">Escolher categoria</option>
-                {categoriasDespesa.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
+              <CategoriaSeletor categorias={categoriasDespesa} value={categoriaId} onChange={setCategoriaId} />
             </label>
             {mostrarPagador && (
               <label>

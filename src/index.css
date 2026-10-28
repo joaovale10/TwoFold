@@ -1175,8 +1175,37 @@ input[type='color']::-webkit-color-swatch {
   line-height: 1;
 }
 
+.categoria-seletor {
+  width: 100%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categoria-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.categoria-opcoes button {
+  text-align: left;
+  padding: 0.65rem 0.8rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.categoria-opcoes button.ativa {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ---------------------------------------------------------------------- */
-/* Contas (cartões)                                                        */
+/* Contas (cartões)                                                      */
 /* ---------------------------------------------------------------------- */
 
 .conta-grelha {

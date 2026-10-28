@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import CategoriaSeletor from '../components/CategoriaSeletor'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import PlanoOrcamento from '../components/PlanoOrcamento.jsx'
@@ -55,6 +56,10 @@ export default function BudgetsPage() {
   async function submeter(e) {
     e.preventDefault()
     setErro(null)
+    if (!categoriaId) {
+      setErro('Escolhe uma categoria.')
+      return
+    }
 
     const { error } = await supabase
       .from('budgets')
@@ -84,14 +89,7 @@ export default function BudgetsPage() {
         <div className="nova-transacao__linha nova-transacao__linha--2">
           <label>
             Categoria
-            <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
-              <option value="">Categoria</option>
-              {categoriasDespesa.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
+            <CategoriaSeletor categorias={categoriasDespesa} value={categoriaId} onChange={setCategoriaId} />
           </label>
           <label>
             Limite (€)

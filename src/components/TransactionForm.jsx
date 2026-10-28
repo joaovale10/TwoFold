@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { nivelDaCategoria } from '../lib/categorias'
+import CategoriaSeletor from './CategoriaSeletor'
 
 export default function TransactionForm({
   accounts,
@@ -14,8 +14,7 @@ export default function TransactionForm({
 }) {
   const [tipo, setTipo] = useState('despesa')
   const [valor, setValor] = useState('')
-  const [categoriaTopoId, setCategoriaTopoId] = useState('')
-  const [categoriaSubId, setCategoriaSubId] = useState('')
+  const [categoriaId, setCategoriaId] = useState('')
   const [contaDestinoId, setContaDestinoId] = useState('')
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [descricao, setDescricao] = useState('')
@@ -39,10 +38,7 @@ export default function TransactionForm({
   }, [householdId])
 
   const categoriasDoTipo = categories.filter((c) => c.tipo === tipo)
-  const categoriasTopoDoTipo = categoriasDoTipo.filter((c) => !c.parent_id)
-  const subcategoriasDaTopo = categoriasDoTipo.filter((c) => c.parent_id === categoriaTopoId)
   const contasDestino = accounts.filter((a) => a.id !== accountId)
-  const categoriaId = categoriaSubId || categoriaTopoId
 
   function alterarDescricao(valor) {
     setDescricao(valor)
@@ -53,9 +49,7 @@ export default function TransactionForm({
 
     const categoriaSugerida = categories.find((c) => c.id === regra.categoria_id)
     if (categoriaSugerida && categoriaSugerida.tipo === tipo) {
-      const { topoId, subId } = nivelDaCategoria(categories, categoriaSugerida.id)
-      setCategoriaTopoId(topoId)
-      setCategoriaSubId(subId)
+      setCategoriaId(categoriaSugerida.id)
     }
   }
 
@@ -100,8 +94,7 @@ export default function TransactionForm({
 
     setValor('')
     setDescricao('')
-    setCategoriaTopoId('')
-    setCategoriaSubId('')
+    setCategoriaId('')
     setContaDestinoId('')
     setData(new Date().toISOString().slice(0, 10))
     setEtiqueta('')
@@ -113,8 +106,7 @@ export default function TransactionForm({
   function limpar() {
     setValor('')
     setDescricao('')
-    setCategoriaTopoId('')
-    setCategoriaSubId('')
+    setCategoriaId('')
     setContaDestinoId('')
     setData(new Date().toISOString().slice(0, 10))
     setEtiqueta('')
@@ -178,13 +170,7 @@ export default function TransactionForm({
         </label>
       </div>
 
-      <div
-        className={`nova-transacao__linha ${
-          tipo !== 'transferencia' && subcategoriasDaTopo.length > 0
-            ? 'nova-transacao__linha--4'
-            : 'nova-transacao__linha--3'
-        }`}
-      >
+      <div className="nova-transacao__linha nova-transacao__linha--3">
         <label>
           Conta
           <select value={accountId} onChange={(e) => onAccountChange(e.target.value)} required>
@@ -211,34 +197,7 @@ export default function TransactionForm({
         ) : (
           <label>
             Categoria
-            <select
-              value={categoriaTopoId}
-              onChange={(e) => {
-                setCategoriaTopoId(e.target.value)
-                setCategoriaSubId('')
-              }}
-            >
-              <option value="">Sem categoria</option>
-              {categoriasTopoDoTipo.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {tipo !== 'transferencia' && subcategoriasDaTopo.length > 0 && (
-          <label>
-            Subcategoria
-            <select value={categoriaSubId} onChange={(e) => setCategoriaSubId(e.target.value)}>
-              <option value="">Nenhuma (categoria geral)</option>
-              {subcategoriasDaTopo.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
+            <CategoriaSeletor categorias={categoriasDoTipo} value={categoriaId} onChange={setCategoriaId} opcional />
           </label>
         )}
 
