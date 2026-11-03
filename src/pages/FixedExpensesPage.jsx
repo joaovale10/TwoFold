@@ -1,32 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
-import CategoriaSeletor from '../components/CategoriaSeletor'
+import CalendarioDespesas from '../components/CalendarioDespesas'
+import FormDespesaFixa from '../components/FormDespesaFixa'
+import MenuAcoes from '../components/MenuAcoes'
+import Modal from '../components/Modal'
+import { diaEfetivo, jaComecou } from '../lib/calendario'
+
+const formatoValor = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+const formatoMesCurto = new Intl.DateTimeFormat('pt-PT', { month: 'long' })
 
 export default function FixedExpensesPage() {
   const { household, contas, categorias } = useOutletContext()
-  const contasAtivas = contas.filter((c) => c.ativa)
-  const [despesas, setDespesas] = useState([])
-  const [descricao, setDescricao] = useState('')
-  const [valor, setValor] = useState('')
-  const [accountId, setAccountId] = useState(contasAtivas[0]?.id ?? '')
-  const [categoriaId, setCategoriaId] = useState('')
-  const [diaVencimento, setDiaVencimento] = useState('1')
+  const [despesas, setDespesas] = useState(null)
+  const [mesVisivel, setMesVisivel] = useState(() => {
+    const hoje = new Date()
+    return { ano: hoje.getFullYear(), mes: hoje.getMonth() }
+  })
+  const [diaSelecionado, setDiaSelecionado] = useState(null)
+  const [formulario, setFormulario] = useState(null) // null | { despesa: objeto ou null }
+  const [aApagar, setAApagar] = useState(null)
   const [erro, setErro] = useState(null)
 
-  const [editandoId, setEditandoId] = useState(null)
-  const [edicao, setEdicao] = useState(null)
-  const [erroEdicao, setErroEdicao] = useState(null)
-
   const categoriasDespesa = categorias.filter((c) => c.tipo === 'despesa')
+  const { ano, mes } = mesVisivel
 
   async function carregar() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('fixed_expenses')
-      .select('*, categories (nome, cor), accounts (nome)')
+      .select(
+        'id, descricao, valor, dia_vencimento, data_inicio, ativa, account_id, categoria_id, categories (nome, cor), accounts (nome)'
+      )
       .eq('household_id', household.id)
       .order('dia_vencimento')
 
+    if (error) setErro('Não foi possível carregar as despesas fixas. Atualiza a página para tentar de novo.')
     setDespesas(data ?? [])
   }
 
@@ -35,237 +44,189 @@ export default function FixedExpensesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id])
 
-  useEffect(() => {
-    if (contasAtivas.length > 0 && !contasAtivas.some((c) => c.id === accountId)) {
-      setAccountId(contasAtivas[0].id)
+  const doMes = useMemo(
+    () =>
+      (despesas ?? [])
+        .filter((d) => jaComecou(d.data_inicio, ano, mes))
+        .map((d) => ({ ...d, dia: diaEfetivo(d.dia_vencimento, ano, mes) }))
+        .sort((a, b) => b.ativa - a.ativa || a.dia - b.dia),
+    [despesas, ano, mes]
+  )
+
+  const despesasPorDia = useMemo(() => {
+    const porDia = {}
+    for (const d of doMes) {
+      if (!d.ativa) continue
+      porDia[d.dia] = [...(porDia[d.dia] ?? []), d]
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contas, accountId])
+    return porDia
+  }, [doMes])
 
-  async function submeter(e) {
-    e.preventDefault()
-    setErro(null)
+  const visiveis = diaSelecionado ? doMes.filter((d) => d.ativa && d.dia === diaSelecionado) : doMes
+  const total = visiveis.filter((d) => d.ativa).reduce((soma, d) => soma + Number(d.valor), 0)
 
-    const { error } = await supabase.from('fixed_expenses').insert({
-      household_id: household.id,
-      account_id: accountId,
-      descricao,
-      valor: Number(valor),
-      categoria_id: categoriaId || null,
-      dia_vencimento: Number(diaVencimento),
-    })
-
-    if (error) {
-      setErro(error.message)
+  function mudarMes(delta, paraHoje = false) {
+    setDiaSelecionado(null)
+    if (paraHoje) {
+      const hoje = new Date()
+      setMesVisivel({ ano: hoje.getFullYear(), mes: hoje.getMonth() })
       return
     }
-
-    setDescricao('')
-    setValor('')
-    carregar()
+    const destino = new Date(ano, mes + delta, 1)
+    setMesVisivel({ ano: destino.getFullYear(), mes: destino.getMonth() })
   }
 
   async function alternarAtiva(despesa) {
-    await supabase.from('fixed_expenses').update({ ativa: !despesa.ativa }).eq('id', despesa.id)
-    carregar()
-  }
-
-  function iniciarEdicao(despesa) {
-    setEditandoId(despesa.id)
-    setErroEdicao(null)
-    setEdicao({
-      descricao: despesa.descricao,
-      valor: String(despesa.valor),
-      account_id: despesa.account_id,
-      categoria_id: despesa.categoria_id ?? '',
-      dia_vencimento: String(despesa.dia_vencimento),
-    })
-  }
-
-  async function guardarEdicao(id) {
-    setErroEdicao(null)
-
-    const { error } = await supabase
-      .from('fixed_expenses')
-      .update({
-        descricao: edicao.descricao,
-        valor: Number(edicao.valor),
-        account_id: edicao.account_id,
-        categoria_id: edicao.categoria_id || null,
-        dia_vencimento: Number(edicao.dia_vencimento),
-      })
-      .eq('id', id)
-
+    setErro(null)
+    const { error } = await supabase.from('fixed_expenses').update({ ativa: !despesa.ativa }).eq('id', despesa.id)
     if (error) {
-      setErroEdicao(error.message)
+      setErro(`Não foi possível alterar “${despesa.descricao}”. Tenta de novo.`)
       return
     }
-
-    setEditandoId(null)
+    setDiaSelecionado(null)
     carregar()
   }
 
-  const totalMensal = despesas.filter((d) => d.ativa).reduce((t, d) => t + Number(d.valor), 0)
+  async function apagar() {
+    setErro(null)
+    const { error } = await supabase.from('fixed_expenses').delete().eq('id', aApagar.id)
+    if (error) {
+      setErro(`Não foi possível apagar “${aApagar.descricao}”. Tenta de novo.`)
+    } else {
+      setDiaSelecionado(null)
+      carregar()
+    }
+    setAApagar(null)
+  }
+
+  function aposGuardar() {
+    setFormulario(null)
+    carregar()
+  }
 
   return (
-    <div>
+    <div className="despesas-fixas">
       <h1 className="titulo-centrado">Despesas Fixas</h1>
-      <p className="saldo">Total mensal: {totalMensal.toFixed(2)} €</p>
-      <p className="login-form__lead">
-        Ao abrires a app, as transações reais em falta até hoje são criadas automaticamente na conta escolhida.
-      </p>
 
-      <form onSubmit={submeter} className="nova-transacao">
-        <div className="nova-transacao__linha nova-transacao__linha--3">
-          <label>
-            Descrição
-            <input
-              placeholder="Ex: Renda"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Valor
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="0,00 €"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Conta
-            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
-              {contasAtivas.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+      <div className="despesas-fixas__grelha">
+        <CalendarioDespesas
+          ano={ano}
+          mes={mes}
+          despesasPorDia={despesasPorDia}
+          diaSelecionado={diaSelecionado}
+          onEscolherDia={setDiaSelecionado}
+          onMudarMes={mudarMes}
+        />
 
-        <div className="nova-transacao__linha nova-transacao__linha--2">
-          <label>
-            Categoria
-            <CategoriaSeletor categorias={categoriasDespesa} value={categoriaId} onChange={setCategoriaId} opcional />
-          </label>
-          <label>
-            Dia do mês
-            <input
-              type="number"
-              min="1"
-              max="31"
-              value={diaVencimento}
-              onChange={(e) => setDiaVencimento(e.target.value)}
-            />
-          </label>
-        </div>
+        <section className="despesas-lista" aria-label="Lista de despesas fixas">
+          {diaSelecionado && (
+            <div className="despesas-lista__filtro">
+              <span>
+                Dia {diaSelecionado} de {formatoMesCurto.format(new Date(ano, mes, 1))}
+              </span>
+              <button type="button" className="botao-link" onClick={() => setDiaSelecionado(null)}>
+                Ver todas
+              </button>
+            </div>
+          )}
 
-        <div className="nova-transacao__acoes">
-          <button type="submit" className="botao-primario">
-            + Adicionar despesa fixa
-          </button>
-        </div>
-      </form>
-      {erro && <p className="erro">{erro}</p>}
+          {erro && (
+            <p className="erro" role="alert">
+              {erro}
+            </p>
+          )}
 
-      {despesas.length === 0 ? (
-        <p>Ainda não há despesas fixas registadas.</p>
-      ) : (
-        <table className="transaction-list">
-          <thead>
-            <tr>
-              <th>Dia</th>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Conta</th>
-              <th>Valor</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {despesas.map((d) =>
-              editandoId === d.id ? (
-                <tr key={d.id}>
-                  <td>
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={edicao.dia_vencimento}
-                      onChange={(e) => setEdicao({ ...edicao, dia_vencimento: e.target.value })}
+          {despesas && visiveis.length === 0 && (
+            <p className="despesas-lista__vazio">
+              {doMes.length === 0 && despesas.length > 0
+                ? 'Ainda não havia despesas fixas neste mês.'
+                : 'Ainda não há despesas fixas. Usa o botão + para adicionar a primeira.'}
+            </p>
+          )}
+
+          {visiveis.length > 0 && (
+            <>
+              <ul className="despesas-lista__linhas">
+                {visiveis.map((d) => (
+                  <li key={d.id} className={d.ativa ? 'despesa-linha' : 'despesa-linha despesa-linha--inativa'}>
+                    <span className="despesa-linha__data">
+                      <strong>{d.dia}</strong>
+                      {DIAS_SEMANA[new Date(ano, mes, d.dia).getDay()]}
+                    </span>
+                    <i
+                      className="despesa-linha__cor"
+                      style={{ background: d.categories?.cor ?? 'var(--muted)' }}
+                      aria-hidden="true"
                     />
-                  </td>
-                  <td>
-                    <input
-                      value={edicao.descricao}
-                      onChange={(e) => setEdicao({ ...edicao, descricao: e.target.value })}
+                    <span className="despesa-linha__texto">
+                      <span className="despesa-linha__descricao">{d.descricao}</span>
+                      <span className="despesa-linha__detalhe">
+                        {d.ativa
+                          ? [d.categories?.nome, d.accounts?.nome].filter(Boolean).join(' · ')
+                          : 'Desativada'}
+                      </span>
+                    </span>
+                    <span className="despesa-linha__valor">{formatoValor.format(d.valor)}</span>
+                    <MenuAcoes
+                      rotulo={`Ações de ${d.descricao}`}
+                      acoes={[
+                        { rotulo: 'Editar', onClick: () => setFormulario({ despesa: d }) },
+                        { rotulo: d.ativa ? 'Desativar' : 'Reativar', onClick: () => alternarAtiva(d) },
+                        { rotulo: 'Apagar', perigo: true, onClick: () => setAApagar(d) },
+                      ]}
                     />
-                  </td>
-                  <td>
-                    <CategoriaSeletor
-                      categorias={categoriasDespesa}
-                      value={edicao.categoria_id}
-                      onChange={(id) => setEdicao({ ...edicao, categoria_id: id })}
-                      opcional
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={edicao.account_id}
-                      onChange={(e) => setEdicao({ ...edicao, account_id: e.target.value })}
-                    >
-                      {contasAtivas.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={edicao.valor}
-                      onChange={(e) => setEdicao({ ...edicao, valor: e.target.value })}
-                    />
-                  </td>
-                  <td>
-                    <button type="button" className="botao-link" onClick={() => guardarEdicao(d.id)}>
-                      Guardar
-                    </button>
-                    <button type="button" className="botao-link" onClick={() => setEditandoId(null)}>
-                      Cancelar
-                    </button>
-                    {erroEdicao && <p className="erro">{erroEdicao}</p>}
-                  </td>
-                </tr>
-              ) : (
-                <tr key={d.id} style={{ opacity: d.ativa ? 1 : 0.5 }}>
-                  <td>{d.dia_vencimento ?? '—'}</td>
-                  <td>{d.descricao}</td>
-                  <td>{d.categories?.nome ?? '—'}</td>
-                  <td>{d.accounts?.nome ?? '—'}</td>
-                  <td className="transaction-list__valor">{Number(d.valor).toFixed(2)} €</td>
-                  <td>
-                    <button type="button" className="botao-link" onClick={() => iniciarEdicao(d)}>
-                      Editar
-                    </button>
-                    <button type="button" className="botao-link" onClick={() => alternarAtiva(d)}>
-                      {d.ativa ? 'Desativar' : 'Reativar'}
-                    </button>
-                  </td>
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
+                  </li>
+                ))}
+              </ul>
+              <p className="despesas-lista__total">
+                {diaSelecionado ? 'Total do dia' : 'Total do mês'} <span>{formatoValor.format(total)}</span>
+              </p>
+            </>
+          )}
+        </section>
+      </div>
+
+      <button
+        type="button"
+        className="botao-circular"
+        onClick={() => setFormulario({ despesa: null })}
+        aria-label="Adicionar despesa fixa"
+      >
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {formulario && (
+        <Modal
+          titulo={formulario.despesa ? 'Editar despesa fixa' : 'Nova despesa fixa'}
+          onFechar={() => setFormulario(null)}
+        >
+          <FormDespesaFixa
+            despesa={formulario.despesa}
+            householdId={household.id}
+            contas={contas}
+            categorias={categoriasDespesa}
+            onGuardada={aposGuardar}
+            onCancelar={() => setFormulario(null)}
+          />
+        </Modal>
+      )}
+
+      {aApagar && (
+        <Modal titulo="Apagar despesa fixa?" onFechar={() => setAApagar(null)}>
+          <p className="modal__texto">
+            “{aApagar.descricao}” deixa de gerar transações. As transações já criadas mantêm-se.
+          </p>
+          <div className="modal__acoes">
+            <button type="button" className="botao-secundario" onClick={() => setAApagar(null)}>
+              Cancelar
+            </button>
+            <button type="button" className="botao-perigo" onClick={apagar}>
+              Apagar despesa
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

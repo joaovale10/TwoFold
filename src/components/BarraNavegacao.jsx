@@ -1,26 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-
-const LINKS = [
-  { to: '/resumo', label: 'Resumo' },
-  { to: '/transacoes', label: 'Transações' },
-  { to: '/casal', label: 'Casal' },
-  { to: '/orcamentos/mensais', base: '/orcamentos', label: 'Orçamentos' },
-  { to: '/objetivos', label: 'Objetivos' },
-  { to: '/contas', label: 'Contas' },
-  { to: '/stats', label: 'Stats' },
-  { to: '/despesas-fixas', label: 'Despesas Fixas' },
-  { to: '/categorias', label: 'Categorias' },
-  { to: '/etiquetas', label: 'Etiquetas' },
-]
+import { LINKS_BARRA, LINK_ADMIN, estaAtivo } from '../lib/navegacao'
 
 const CAMPOS_DE_ESCRITA =
   'textarea, [contenteditable], input:not([type=checkbox], [type=radio], [type=file], [type=button], [type=submit], [type=color], [type=range])'
-
-function estaAtivo(pathname, { to, base }) {
-  const raiz = base ?? to
-  return pathname === raiz || pathname.startsWith(`${raiz}/`)
-}
 
 export default function BarraNavegacao({ admin }) {
   const { pathname } = useLocation()
@@ -30,7 +13,7 @@ export default function BarraNavegacao({ admin }) {
   const indicadorRef = useRef(null)
   const primeiraVezRef = useRef(true)
 
-  const links = admin ? [...LINKS, { to: '/convites', label: 'Convites' }] : LINKS
+  const links = admin ? [...LINKS_BARRA, LINK_ADMIN] : LINKS_BARRA
 
   useLayoutEffect(() => {
     const lista = listaRef.current
