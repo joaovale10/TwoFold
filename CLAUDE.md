@@ -66,7 +66,7 @@ Pontos-chave de design:
 
 1. Login por email ou username (só entrar — sem registo, novos utilizadores chegam por convite)
 2. **Resumo** (`/resumo`, página inicial): património, saldo pessoal vs. casal, receitas/despesas/poupança do mês com evolução face ao mês anterior, despesas por categoria, orçamento mensal, "disponível para gastar" + limite diário, próximos vencimentos de despesas fixas — com filtro Tudo/A minha conta/Casal
-3. Transações por conta (receita/despesa/transferência: valor, categoria, data, descrição), com saldo, filtro de datas (De/Até ou "Todas as datas"), pesquisa por texto e edição inline
+3. Transações (receita/despesa/transferência: valor, categoria, data, descrição) de todas as contas acessíveis, em lista por mês com pesquisa por texto; registar/editar em popup pelo botão "+" e menu ⋮
 4. **Casal** (`/casal`): resumo do mês só das contas `casal` — receitas, despesas, poupança/disponível, contribuições por pessoa (usa `household_members.nome`), despesas conjuntas por categoria, taxa de poupança vs. média de 6 meses
 5. Contas: cartões lado a lado (`AccountCard.jsx`), cada um cria as suas contas pessoais (privadas) e contas casal (partilhadas), com saldo inicial, ícone (só visual, `localStorage`, não vai para a BD) e estado ativa/inativa — editável (nome, saldo inicial); saldo de cada conta = saldo inicial + movimentos (incluindo transferências); **só contas ativas aparecem nos dropdowns de escolher conta** ao criar transações, despesas fixas ou objetivos
 6. Categorias com subcategorias, por household (casal ou individuais). O schema prevê categorias globais predefinidas, mas não existe nenhuma em produção
@@ -118,9 +118,9 @@ src/
   pages/
     Login.jsx                # só "Entrar" — sem ecrã de registo
     SummaryPage.jsx           # /resumo (página inicial): património, receitas/despesas/poupança, disponível, categorias, insights
-    TransactionsPage.jsx      # /transacoes: saldo da conta, TransactionForm + TransactionList (com edição inline), filtro de datas + pesquisa
+    TransactionsPage.jsx      # /transacoes: lista por mês (TransactionList) + pesquisa; "+" abre TransactionForm em Modal
     CouplePage.jsx            # /casal: resumo, contribuições por pessoa, despesas conjuntas, taxa de poupança
-    AccountsPage.jsx          # /contas: cartões em grelha (AccountCard) por conta pessoal/casal, saldo, ativa/inativa
+    AccountsPage.jsx          # /contas: cartões em grelha (AccountCard) por conta pessoal/casal, saldo, ativa/inativa; "+" abre popup de nova conta
     CategoriesPage.jsx        # /categorias: criar/editar categorias + subcategorias + regras de categorização automática
     FixedExpensesPage.jsx     # /despesas-fixas: calendário com os vencimentos + lista com menu de ações; criar e editar em popup (FormDespesaFixa, Modal)
     BudgetsPage.jsx           # /orcamentos/:tipo (mensais|anuais): limite por categoria, progresso face ao gasto real
@@ -138,8 +138,8 @@ src/
     NotificationsBell.jsx    # dropdown de notificações na sidebar
     CategoryPieChart.jsx     # gráfico de pizza (recharts) reutilizado no Resumo e na página Casal
     AccountCard.jsx          # cartão de conta: ícone (localStorage), saldo, editar (nome/saldo inicial), ativar/desativar
-    TransactionForm.jsx      # criar transação (despesa/receita/transferência), conta controlada pelo pai, sugere categoria via regras; só lista contas ativas
-    TransactionList.jsx      # tabela de transações, com edição inline por linha quando recebe `onAtualizado`
+    TransactionForm.jsx      # criar/editar transação (despesa/receita/transferência) dentro de um Modal, sugere categoria via regras; só lista contas ativas
+    TransactionList.jsx      # lista de transações agrupada por mês, com menu ⋮ (Editar/Apagar)
     CategoriaSeletor.jsx     # botão + popup de categoria → subcategoria
     MonthlyBarChart.jsx      # gráfico de barras mensal (recharts)
     PlanoOrcamento.jsx       # Plano de Orçamento, no separador Mensal de /orcamentos
