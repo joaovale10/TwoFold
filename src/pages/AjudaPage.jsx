@@ -75,6 +75,8 @@ const SECCOES = [
     topicos: [
       'Para despesas que se repetem todos os meses (renda, seguros, subscrições).',
       'Defines o dia de vencimento.',
+      'Os dias com despesas ficam marcados no calendário. Toca num dia para ver só as despesas desse dia.',
+      'Usa os três pontos de cada linha para editar, desativar ou apagar. Apagar não remove as transações já criadas.',
       'A app cria automaticamente a transação real desse mês sempre que abres a app — não precisas de lançar à mão.',
     ],
   },

@@ -122,7 +122,7 @@ src/
     CouplePage.jsx            # /casal: resumo, contribuições por pessoa, despesas conjuntas, taxa de poupança
     AccountsPage.jsx          # /contas: cartões em grelha (AccountCard) por conta pessoal/casal, saldo, ativa/inativa
     CategoriesPage.jsx        # /categorias: criar/editar categorias + subcategorias + regras de categorização automática
-    FixedExpensesPage.jsx     # /despesas-fixas: CRUD de despesas fixas (conta, categoria, dia de vencimento), edição inline na tabela
+    FixedExpensesPage.jsx     # /despesas-fixas: calendário com os vencimentos + lista com menu de ações; criar e editar em popup (FormDespesaFixa, Modal)
     BudgetsPage.jsx           # /orcamentos/:tipo (mensais|anuais): limite por categoria, progresso face ao gasto real
     GoalsPage.jsx             # /objetivos: metas de poupança ligadas a uma conta real, com previsão de data
     StatsPage.jsx             # /stats: estatísticas de despesas
@@ -133,6 +133,7 @@ src/
     ContaPage.jsx             # /conta: nome, username, nome do espaço
     AjudaPage.jsx             # /ajuda
   components/
+    BarraNavegacao.jsx       # barra deslizante inferior no telemóvel (até 720 px); no desktop fica a sidebar
     AppLayout.jsx            # sidebar de navegação + toggle de tema + sino de notificações + <Outlet context={{ household, contas, categorias, regras, atualizar }} />
     NotificationsBell.jsx    # dropdown de notificações na sidebar
     CategoryPieChart.jsx     # gráfico de pizza (recharts) reutilizado no Resumo e na página Casal

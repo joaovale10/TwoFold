@@ -628,33 +628,7 @@ select {
 }
 
 .seletor-orcamento {
-  display: flex;
-  gap: 0.25rem;
-  width: fit-content;
-  margin-bottom: 0.5rem;
-  padding: 0.25rem;
-  border-radius: 22px;
-  background: var(--paper-alt);
-}
-
-.seletor-orcamento a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 1rem;
-  border-radius: 18px;
-  color: var(--ink);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.seletor-orcamento a:hover {
-  color: var(--accent);
-}
-
-.seletor-orcamento a.ativo {
-  background: var(--panel-dark-accent);
-  color: var(--panel-dark-text);
+  margin-bottom: 0.75rem;
 }
 
 @media (min-width: 721px) {
@@ -673,6 +647,17 @@ select {
   .so-desktop,
   .sidebar {
     display: none !important;
+  }
+
+  /* Continua disponível para leitores de ecrã. */
+  .app-content--na-barra h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .app-layout {
@@ -772,7 +757,8 @@ select {
   }
 }
 
-.nova-transacao__linha label {
+.nova-transacao__linha label,
+.nova-transacao__campo {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -857,11 +843,16 @@ input[type='color']::-webkit-color-swatch {
   color: var(--muted);
 }
 
-.filtro-datas input {
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+.filtro-datas input,
+.plano-orcamento__cabecalho select {
+  min-height: 36px;
+  padding: 0.3rem 0.8rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper-alt);
+  color: var(--ink);
   font-family: inherit;
+  font-size: 0.82rem;
 }
 
 .filtro-datas .botao-link:disabled {
@@ -889,18 +880,593 @@ input[type='color']::-webkit-color-swatch {
   color: var(--muted);
 }
 
-.tipo-toggle button {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
+/* Estilo único de todos os pickers: período, conta, tipo, Mensais/Anuais. */
+.tipo-toggle {
+  display: inline-flex;
+  gap: 0.1rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.2rem;
+  border-radius: 999px;
   background: var(--paper-alt);
+}
+
+.tipo-toggle--deslizante {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.tipo-toggle--deslizante::-webkit-scrollbar {
+  display: none;
+}
+
+.tipo-toggle button,
+.tipo-toggle a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 0.8rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.tipo-toggle button:hover,
+.tipo-toggle a:hover {
+  color: var(--accent);
+}
+
+.tipo-toggle button.ativo,
+.tipo-toggle a.ativo {
+  background: var(--panel-dark-accent);
+  color: var(--panel-dark-text);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Modal                                                                    */
+/* ---------------------------------------------------------------------- */
+
+.modal-fundo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overscroll-behavior: contain;
+  background: rgba(30, 24, 16, 0.5);
+  animation: modal-fundo-entrar 0.18s ease-out;
+}
+
+.modal {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 100%;
+  padding: 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(30, 24, 16, 0.3);
+  animation: modal-entrar 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.modal:focus {
+  outline: none;
+}
+
+.modal__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.modal__cabecalho h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.modal__fechar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -0.5rem -0.6rem -0.5rem 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
   color: var(--ink);
   cursor: pointer;
 }
 
-.tipo-toggle button.ativo {
-  background: var(--panel-dark);
+.modal__fechar:hover {
+  background: var(--paper-alt);
+}
+
+.modal__texto {
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.modal__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal__acoes button {
+  min-height: 44px;
+  margin: 0;
+  padding: 0 1.1rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.botao-secundario {
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--ink);
+}
+
+.botao-secundario:hover {
+  background: var(--paper-alt);
+}
+
+.botao-perigo {
+  border: none;
+  background: var(--danger);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.botao-perigo:hover {
+  filter: brightness(0.92);
+}
+
+@keyframes modal-fundo-entrar {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+@keyframes modal-subir {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (max-width: 720px) {
+  .modal-fundo {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: none;
+    max-height: 92%;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    animation: modal-subir 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+
+  .modal__acoes button {
+    flex: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Despesas fixas                                                           */
+/* ---------------------------------------------------------------------- */
+
+.despesas-fixas {
+  padding-bottom: 4.5rem;
+}
+
+.despesas-fixas__grelha {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1040px) {
+  .despesas-fixas__grelha {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.25rem;
+  }
+}
+
+.calendario {
+  padding: 0.75rem 0.85rem 0.85rem;
+  background: var(--paper-alt);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.calendario__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.calendario__cabecalho h2 {
+  margin: 0 auto 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.calendario__cabecalho h2::first-letter {
+  text-transform: uppercase;
+}
+
+.calendario__setas {
+  display: flex;
+  margin-right: -0.4rem;
+}
+
+.calendario__setas button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.calendario__setas button:hover {
+  background: var(--paper);
+}
+
+.calendario__grelha {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 0.15rem;
+  animation: modal-fundo-entrar 0.2s ease-out;
+}
+
+.calendario__grelha th {
+  padding: 0.2rem 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.calendario__grelha td {
+  padding: 0;
+  text-align: center;
+}
+
+.calendario__semana-atual td {
+  background: var(--paper);
+}
+
+.calendario__semana-atual td:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.calendario__semana-atual td:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.calendario__dia {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 44px;
+  max-width: 100%;
+  height: 44px;
+  padding: 0.55rem 0 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  touch-action: manipulation;
+}
+
+button.calendario__dia {
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+button.calendario__dia:hover {
+  background: var(--paper);
+}
+
+.calendario__dia--hoje {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+button.calendario__dia--selecionado,
+button.calendario__dia--selecionado:hover {
+  background: var(--panel-dark-accent);
   color: var(--panel-dark-text);
-  border-color: var(--panel-dark);
+}
+
+.calendario__pontos {
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.calendario__pontos i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.calendario__dia--selecionado .calendario__pontos i {
+  box-shadow: 0 0 0 1px var(--panel-dark-text);
+}
+
+.despesas-lista__filtro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.despesas-lista__filtro .botao-link {
+  min-height: 32px;
+}
+
+.despesas-lista__vazio {
+  margin: 0.5rem 0.25rem;
+  color: var(--muted);
+}
+
+.despesas-lista__linhas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--paper-alt);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.despesa-linha {
+  display: grid;
+  grid-template-columns: 2rem 0.6rem minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.6rem;
+  padding: 0.35rem 0.2rem 0.35rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.despesa-linha:last-child {
+  border-bottom: none;
+}
+
+.despesa-linha--inativa > :not(.menu-acoes) {
+  opacity: 0.5;
+}
+
+.despesa-linha__data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
+.despesa-linha__data strong {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.despesa-linha__cor {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+
+.despesa-linha__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.despesa-linha__descricao,
+.despesa-linha__detalhe {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.despesa-linha__descricao {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.despesa-linha__detalhe {
+  min-height: 1em;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.despesa-linha__valor {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.despesas-lista__total {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin: 0.6rem 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.despesas-lista__total span {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.menu-acoes {
+  position: relative;
+}
+
+.menu-acoes__botao {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.menu-acoes__botao:hover,
+.menu-acoes__botao[aria-expanded='true'] {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.menu-acoes .categoria-menu__lista button {
+  min-height: 44px;
+  font-size: 0.92rem;
+}
+
+.menu-acoes__lista--cima {
+  top: auto;
+  bottom: 100%;
+  margin: 0 0 0.2rem;
+}
+
+.botao-circular {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.5rem;
+  z-index: 21;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--panel-dark-accent);
+  color: var(--panel-dark-text);
+  box-shadow: 0 8px 20px rgba(40, 32, 20, 0.32);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.15s ease;
+}
+
+.botao-circular:hover {
+  transform: scale(1.05);
+}
+
+.botao-circular:active {
+  transform: scale(0.94);
+}
+
+.botao-circular:focus-visible {
+  outline-color: var(--ink);
+}
+
+.form-despesa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.form-despesa__par {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Abaixo dos 16 px, o iPhone faz zoom à página ao focar o campo. */
+.form-despesa input,
+.form-despesa select,
+.form-despesa .categoria-seletor {
+  width: 100%;
+  font-size: 16px;
+}
+
+.form-despesa__nota {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  /* Por cima da barra de navegação. */
+  .botao-circular {
+    right: 1rem;
+    bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.5rem) + 4.55rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-fundo,
+  .modal,
+  .calendario__grelha {
+    animation: none;
+  }
+
+  .tipo-toggle button,
+  .tipo-toggle a,
+  button.calendario__dia,
+  .botao-circular {
+    transition: none;
+  }
 }
 
 .transaction-list {

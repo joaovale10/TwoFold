@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
+import { paginaDaBarra } from '../lib/navegacao'
 import BarraNavegacao from './BarraNavegacao.jsx'
 import MenuPerfil from './MenuPerfil.jsx'
 import NotificationsBell from './NotificationsBell.jsx'
@@ -126,9 +127,9 @@ export default function AppLayout({ household, contas, categorias, regras, atual
           </button>
         </div>
       </aside>
-      <main className="app-content">
+      <main className={paginaDaBarra(pathname) ? 'app-content app-content--na-barra' : 'app-content'}>
         {pathname.startsWith('/orcamentos/') && (
-          <nav className="seletor-orcamento so-movel" aria-label="Tipo de orçamento">
+          <nav className="tipo-toggle seletor-orcamento so-movel" aria-label="Tipo de orçamento">
             {ORCAMENTO_LINKS.map((link) => (
               <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
                 {link.label}

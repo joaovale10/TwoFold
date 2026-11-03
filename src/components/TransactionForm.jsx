@@ -172,16 +172,22 @@ export default function TransactionForm({
       </div>
 
       <div className="nova-transacao__linha nova-transacao__linha--3">
-        <label>
-          Conta
-          <select value={accountId} onChange={(e) => onAccountChange(e.target.value)} required>
+        <div className="nova-transacao__campo" role="group" aria-label="Conta">
+          <span>Conta</span>
+          <div className="tipo-toggle tipo-toggle--deslizante">
             {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
+              <button
+                key={a.id}
+                type="button"
+                className={a.id === accountId ? 'ativo' : ''}
+                aria-pressed={a.id === accountId}
+                onClick={() => onAccountChange(a.id)}
+              >
                 {a.nome}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
 
         {tipo === 'transferencia' ? (
           <label>
