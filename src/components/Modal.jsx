@@ -52,7 +52,19 @@ export default function Modal({ titulo, onFechar, children }) {
     vista?.addEventListener('scroll', ajustarAoTeclado)
     document.addEventListener('keydown', aoCarregarTecla)
 
+    const fundo = fundoRef.current
     return () => {
+      // O React remove o popup de imediato: uma cópia estática anima a saída, seja qual for o botão que o fechou.
+      // Em StrictMode (dev) a limpeza corre com o popup ainda na página: aí não há saída a animar.
+      if (!fundo.isConnected && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const copia = fundo.cloneNode(true)
+        copia.classList.add('modal-fundo--a-sair')
+        copia.removeAttribute('id')
+        copia.setAttribute('aria-hidden', 'true')
+        copia.addEventListener('animationend', () => copia.remove(), { once: true })
+        setTimeout(() => copia.remove(), 400)
+        document.body.appendChild(copia)
+      }
       document.body.style.overflow = overflowAnterior
       vista?.removeEventListener('resize', ajustarAoTeclado)
       vista?.removeEventListener('scroll', ajustarAoTeclado)

@@ -694,12 +694,6 @@ select {
   }
 }
 
-.saldo {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 500;
-}
-
 .transaction-form {
   display: flex;
   flex-wrap: wrap;
@@ -950,7 +944,9 @@ input[type='color']::-webkit-color-swatch {
   padding: 1rem;
   overscroll-behavior: contain;
   background: rgba(30, 24, 16, 0.5);
-  animation: modal-fundo-entrar 0.18s ease-out;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: modal-fundo-entrar 0.2s ease-out;
 }
 
 .modal {
@@ -964,7 +960,7 @@ input[type='color']::-webkit-color-swatch {
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: 0 16px 40px rgba(30, 24, 16, 0.3);
-  animation: modal-entrar 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: modal-entrar 0.34s cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
 .modal:focus {
@@ -1047,35 +1043,49 @@ input[type='color']::-webkit-color-swatch {
 @keyframes modal-fundo-entrar {
   from {
     opacity: 0;
+    backdrop-filter: blur(0);
   }
 }
 
+/* Ligeiro ressalto ao abrir: o popup "assenta" no centro. */
 @keyframes modal-entrar {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(16px) scale(0.92);
   }
 }
 
-@keyframes modal-subir {
-  from {
-    transform: translateY(100%);
+@keyframes modal-fundo-sair {
+  to {
+    opacity: 0;
   }
+}
+
+@keyframes modal-sair {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+/* Cópia estática deixada pelo Modal ao fechar, só para animar a saída. */
+.modal-fundo--a-sair {
+  pointer-events: none;
+  animation: modal-fundo-sair 0.16s ease-in forwards;
+}
+
+.modal-fundo--a-sair .modal,
+.modal-fundo--a-sair .categoria-modal {
+  animation: modal-sair 0.16s ease-in forwards;
 }
 
 @media (max-width: 720px) {
   .modal-fundo {
-    align-items: flex-end;
-    padding: 0;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .modal {
-    max-width: none;
-    max-height: 92%;
-    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
-    border-width: 1px 0 0;
-    border-radius: 20px 20px 0 0;
-    animation: modal-subir 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+    border-radius: 22px;
   }
 
   .modal__acoes button {
@@ -1087,8 +1097,45 @@ input[type='color']::-webkit-color-swatch {
 /* Despesas fixas                                                           */
 /* ---------------------------------------------------------------------- */
 
-.despesas-fixas {
+.despesas-fixas,
+.transacoes,
+.contas {
   padding-bottom: 4.5rem;
+}
+
+/* Transações: lista por mês, no mesmo formato das despesas fixas. */
+.transacoes-mes {
+  margin-bottom: 1.1rem;
+}
+
+.transacoes-mes__titulo {
+  margin: 0 0.5rem 0.4rem;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.despesa-linha__valor--receita {
+  color: #2f7a4f;
+}
+
+.despesa-linha__valor--transferencia {
+  color: var(--muted);
+}
+
+[data-theme='dark'] .despesa-linha__valor--receita {
+  color: #7fbf8f;
+}
+
+.transacoes .pesquisa-transacoes {
+  max-width: none;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  font-size: 16px;
 }
 
 .despesas-fixas__grelha {
@@ -1457,6 +1504,8 @@ button.calendario__dia--selecionado:hover {
 @media (prefers-reduced-motion: reduce) {
   .modal-fundo,
   .modal,
+  .categoria-modal-fundo,
+  .categoria-modal,
   .calendario__grelha {
     animation: none;
   }
@@ -1899,6 +1948,7 @@ button.calendario__dia--selecionado:hover {
   justify-content: center;
   padding: 1rem;
   background: rgba(0, 0, 0, 0.45);
+  animation: modal-fundo-entrar 0.2s ease-out;
 }
 
 .categoria-modal {
@@ -1911,6 +1961,7 @@ button.calendario__dia--selecionado:hover {
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  animation: modal-entrar 0.34s cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
 .categoria-modal__cabecalho {

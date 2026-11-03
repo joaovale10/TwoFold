@@ -2,70 +2,44 @@ import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
-import { saldoDaConta } from '../lib/saldo.js'
 import TransactionForm from '../components/TransactionForm.jsx'
 import TransactionList from '../components/TransactionList.jsx'
+import Modal from '../components/Modal'
+
+const COLUNAS =
+  'id, tipo, valor, data, descricao, etiqueta, account_id, conta_destino_id, categoria_id, categories (nome, cor), accounts!transactions_account_id_fkey (nome), conta_destino:accounts!transactions_conta_destino_id_fkey (nome)'
+
+const formatoValor = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
 
 export default function TransactionsPage() {
   const { household, contas, categorias, regras } = useOutletContext()
   const { user } = useAuth()
-  const [transactions, setTransactions] = useState([])
-  const [todasTransacoes, setTodasTransacoes] = useState([])
-  const contasAtivas = contas.filter((c) => c.ativa)
-  const [accountId, setAccountId] = useState(contasAtivas[0]?.id ?? '')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
+  const [transacoes, setTransacoes] = useState(null)
   const [pesquisa, setPesquisa] = useState('')
+  const [formulario, setFormulario] = useState(null) // null | { transacao: objeto ou null }
+  const [aApagar, setAApagar] = useState(null)
   const [apagadas, setApagadas] = useState([])
   const [mostrarApagadas, setMostrarApagadas] = useState(false)
+  const [erro, setErro] = useState(null)
 
-  async function carregarTransacoes() {
-    let query = supabase
+  // O RLS já limita às contas a que o utilizador tem acesso (pessoais dele + casal).
+  async function carregar() {
+    const { data, error } = await supabase
       .from('transactions')
-      .select(
-        '*, categories (nome, cor), accounts!transactions_account_id_fkey (nome, tipo), conta_destino:accounts!transactions_conta_destino_id_fkey (nome)'
-      )
+      .select(COLUNAS)
       .eq('household_id', household.id)
       .is('apagada_em', null)
       .order('data', { ascending: false })
       .order('created_at', { ascending: false })
 
-    if (dataInicio) query = query.gte('data', dataInicio)
-    if (dataFim) query = query.lte('data', dataFim)
-    if (!dataInicio && !dataFim) query = query.limit(50)
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    setTransactions(data ?? [])
-  }
-
-  // Histórico completo (sem filtro de data/pesquisa nem limite de 50), só para o cálculo
-  // do saldo real da conta — a tabela usa `transactions`, que pode estar filtrada/limitada.
-  async function carregarHistoricoSaldo() {
-    const { data } = await supabase
-      .from('transactions')
-      .select('account_id, conta_destino_id, tipo, valor')
-      .eq('household_id', household.id)
-      .is('apagada_em', null)
-
-    setTodasTransacoes(data ?? [])
-  }
-
-  async function atualizarTudo() {
-    await Promise.all([carregarTransacoes(), carregarHistoricoSaldo()])
+    if (error) setErro('Não foi possível carregar as transações. Atualiza a página para tentar de novo.')
+    setTransacoes(data ?? [])
   }
 
   async function carregarApagadas() {
     const { data } = await supabase
       .from('transactions')
-      .select(
-        '*, categories (nome, cor), accounts!transactions_account_id_fkey (nome, tipo), conta_destino:accounts!transactions_conta_destino_id_fkey (nome)'
-      )
+      .select(COLUNAS)
       .eq('household_id', household.id)
       .not('apagada_em', 'is', null)
       .order('apagada_em', { ascending: false })
@@ -74,126 +48,95 @@ export default function TransactionsPage() {
     setApagadas(data ?? [])
   }
 
-  async function restaurar(id) {
-    const { error } = await supabase.from('transactions').update({ apagada_em: null }).eq('id', id)
-    if (error) return
-
-    await Promise.all([atualizarTudo(), carregarApagadas()])
-  }
-
   useEffect(() => {
-    carregarTransacoes()
+    carregar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household.id, dataInicio, dataFim])
+  }, [household.id])
 
   useEffect(() => {
     if (mostrarApagadas) carregarApagadas()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household.id, mostrarApagadas])
 
-  useEffect(() => {
-    carregarHistoricoSaldo()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household.id])
+  async function apagar() {
+    setErro(null)
+    const { error } = await supabase
+      .from('transactions')
+      .update({ apagada_em: new Date().toISOString() })
+      .eq('id', aApagar.id)
 
-  useEffect(() => {
-    if (contasAtivas.length > 0 && !contasAtivas.some((c) => c.id === accountId)) {
-      setAccountId(contasAtivas[0].id)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contas, accountId])
+    if (error) setErro('Não foi possível apagar a transação. Tenta de novo.')
+    else await Promise.all([carregar(), mostrarApagadas && carregarApagadas()])
+    setAApagar(null)
+  }
+
+  async function restaurar(id) {
+    const { error } = await supabase.from('transactions').update({ apagada_em: null }).eq('id', id)
+    if (!error) await Promise.all([carregar(), carregarApagadas()])
+  }
+
+  function aposGuardar() {
+    setFormulario(null)
+    carregar()
+  }
 
   const termo = pesquisa.trim().toLowerCase()
-  const transacoesDaConta = transactions.filter((tx) => {
-    if (tx.account_id !== accountId && tx.conta_destino_id !== accountId) return false
-    if (!termo) return true
-    return (
+  const visiveis = (transacoes ?? []).filter(
+    (tx) =>
+      !termo ||
       (tx.descricao ?? '').toLowerCase().includes(termo) ||
       (tx.categories?.nome ?? '').toLowerCase().includes(termo) ||
-      (tx.etiqueta ?? '').toLowerCase().includes(termo)
-    )
-  })
-
-  const apagadasDaConta = apagadas.filter(
-    (tx) => tx.account_id === accountId || tx.conta_destino_id === accountId
+      (tx.etiqueta ?? '').toLowerCase().includes(termo) ||
+      (tx.accounts?.nome ?? '').toLowerCase().includes(termo)
   )
 
-  const contaAtual = contas.find((c) => c.id === accountId)
-  const saldo = contaAtual ? saldoDaConta(contaAtual, todasTransacoes) : 0
-
-  const semFiltroDeData = !dataInicio && !dataFim
-
   return (
-    <div>
+    <div className="transacoes">
       <h1 className="titulo-centrado">Transações</h1>
-      <p className="saldo">Saldo da conta: {saldo.toFixed(2)} €</p>
-
-      <TransactionForm
-        accounts={contasAtivas}
-        categories={categorias}
-        regras={regras}
-        householdId={household.id}
-        userId={user.id}
-        accountId={accountId}
-        onAccountChange={setAccountId}
-        onCriada={atualizarTudo}
-      />
 
       <input
         type="search"
-        placeholder="Pesquisar por descrição ou categoria..."
+        name="pesquisa"
+        aria-label="Pesquisar transações"
+        placeholder="Pesquisar transações…"
+        autoComplete="off"
         value={pesquisa}
         onChange={(e) => setPesquisa(e.target.value)}
         className="pesquisa-transacoes"
       />
 
-      <div className="filtro-datas">
-        <label>
-          De
-          <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-        </label>
-        <label>
-          Até
-          <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
-        </label>
-        <button
-          type="button"
-          className="botao-link"
-          disabled={semFiltroDeData}
-          onClick={() => {
-            setDataInicio('')
-            setDataFim('')
-          }}
-        >
-          Todas as datas
-        </button>
-        {semFiltroDeData && <span className="login-form__lead">A mostrar as últimas 50</span>}
-      </div>
+      {erro && (
+        <p className="erro" role="alert">
+          {erro}
+        </p>
+      )}
+
+      {transacoes && visiveis.length === 0 && (
+        <p className="despesas-lista__vazio">
+          {termo ? 'Nenhuma transação encontrada.' : 'Ainda não há transações. Usa o botão + para registar a primeira.'}
+        </p>
+      )}
 
       <TransactionList
-        transactions={transacoesDaConta}
+        transactions={visiveis}
         categorias={categorias}
-        contaEmFoco={accountId}
-        onAtualizado={atualizarTudo}
+        onEditar={(tx) => setFormulario({ transacao: tx })}
+        onApagar={setAApagar}
       />
 
-      <button
-        type="button"
-        className="botao-link"
-        onClick={() => setMostrarApagadas((v) => !v)}
-      >
+      <button type="button" className="botao-link" onClick={() => setMostrarApagadas((v) => !v)}>
         {mostrarApagadas ? 'Esconder apagadas' : 'Ver transações apagadas'}
       </button>
 
       {mostrarApagadas && (
         <div className="transacoes-apagadas">
-          {apagadasDaConta.length === 0 ? (
-            <p className="login-form__lead">Sem transações apagadas nesta conta.</p>
+          {apagadas.length === 0 ? (
+            <p className="login-form__lead">Sem transações apagadas.</p>
           ) : (
-            apagadasDaConta.map((tx) => (
+            apagadas.map((tx) => (
               <div key={tx.id} className="transacoes-apagadas__item">
                 <span>
-                  {tx.data} — {tx.descricao || '—'} — {Number(tx.valor).toFixed(2)} €
+                  {tx.data} — {tx.descricao || '—'} — {formatoValor.format(tx.valor)}
                 </span>
                 <button type="button" className="botao-link" onClick={() => restaurar(tx.id)}>
                   Restaurar
@@ -202,6 +145,52 @@ export default function TransactionsPage() {
             ))
           )}
         </div>
+      )}
+
+      <button
+        type="button"
+        className="botao-circular"
+        onClick={() => setFormulario({ transacao: null })}
+        aria-label="Registar transação"
+      >
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {formulario && (
+        <Modal
+          titulo={formulario.transacao ? 'Editar transação' : 'Nova transação'}
+          onFechar={() => setFormulario(null)}
+        >
+          <TransactionForm
+            transacao={formulario.transacao}
+            accounts={contas}
+            categories={categorias}
+            regras={regras}
+            householdId={household.id}
+            userId={user.id}
+            onGuardada={aposGuardar}
+            onCancelar={() => setFormulario(null)}
+          />
+        </Modal>
+      )}
+
+      {aApagar && (
+        <Modal titulo="Apagar transação?" onFechar={() => setAApagar(null)}>
+          <p className="modal__texto">
+            “{aApagar.descricao || 'Sem descrição'}” de {formatoValor.format(aApagar.valor)}. Podes restaurá-la em
+            “Ver transações apagadas”.
+          </p>
+          <div className="modal__acoes">
+            <button type="button" className="botao-secundario" onClick={() => setAApagar(null)}>
+              Cancelar
+            </button>
+            <button type="button" className="botao-perigo" onClick={apagar}>
+              Apagar transação
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

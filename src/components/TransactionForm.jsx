@@ -1,142 +1,135 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import CategoriaSeletor from './CategoriaSeletor'
 import { dataLocalISO } from '../lib/datas'
 
+const TIPOS = [
+  ['despesa', 'Despesa'],
+  ['receita', 'Receita'],
+  ['transferencia', 'Transferência'],
+]
+
 export default function TransactionForm({
+  transacao,
   accounts,
   categories,
   regras,
   householdId,
   userId,
-  accountId,
-  onAccountChange,
-  onCriada,
+  onGuardada,
+  onCancelar,
 }) {
-  const [tipo, setTipo] = useState('despesa')
-  const [valor, setValor] = useState('')
-  const [categoriaId, setCategoriaId] = useState('')
-  const [contaDestinoId, setContaDestinoId] = useState('')
-  const [data, setData] = useState(() => dataLocalISO())
-  const [descricao, setDescricao] = useState('')
-  const [etiqueta, setEtiqueta] = useState('')
+  const contaRotuloId = useId()
+  const categoriaRotuloId = useId()
+  const destinoRotuloId = useId()
+  // Uma transação antiga pode estar numa conta já desativada: mantém-na na lista para não a perder.
+  const contas = accounts.filter((a) => a.ativa || a.id === transacao?.account_id || a.id === transacao?.conta_destino_id)
+
+  const [tipo, setTipo] = useState(transacao?.tipo ?? 'despesa')
+  const [valor, setValor] = useState(transacao ? String(transacao.valor) : '')
+  const [accountId, setAccountId] = useState(transacao?.account_id ?? contas[0]?.id ?? '')
+  const [contaDestinoId, setContaDestinoId] = useState(transacao?.conta_destino_id ?? '')
+  const [categoriaId, setCategoriaId] = useState(transacao?.categoria_id ?? '')
+  const [data, setData] = useState(transacao?.data ?? dataLocalISO())
+  const [descricao, setDescricao] = useState(transacao?.descricao ?? '')
+  const [etiqueta, setEtiqueta] = useState(transacao?.etiqueta ?? '')
   const [etiquetasExistentes, setEtiquetasExistentes] = useState([])
-  const [aEnviar, setAEnviar] = useState(false)
+  const [aGuardar, setAGuardar] = useState(false)
   const [erro, setErro] = useState(null)
-  const [sucesso, setSucesso] = useState(false)
 
   useEffect(() => {
-    async function carregarEtiquetas() {
-      const { data: linhas } = await supabase
-        .from('transactions')
-        .select('etiqueta')
-        .eq('household_id', householdId)
-        .not('etiqueta', 'is', null)
-      const unicas = [...new Set((linhas ?? []).map((l) => l.etiqueta))].sort()
-      setEtiquetasExistentes(unicas)
-    }
-    carregarEtiquetas()
+    supabase
+      .from('transactions')
+      .select('etiqueta')
+      .eq('household_id', householdId)
+      .not('etiqueta', 'is', null)
+      .then(({ data: linhas }) => setEtiquetasExistentes([...new Set((linhas ?? []).map((l) => l.etiqueta))].sort()))
   }, [householdId])
 
+  if (contas.length === 0) {
+    return (
+      <p>
+        Para registar uma transação, precisas de uma conta ativa. <Link to="/contas">Criar conta</Link>
+      </p>
+    )
+  }
+
   const categoriasDoTipo = categories.filter((c) => c.tipo === tipo)
-  const contasDestino = accounts.filter((a) => a.id !== accountId)
+  const contasDestino = contas.filter((a) => a.id !== accountId)
 
-  function alterarDescricao(valor) {
-    setDescricao(valor)
-    if (categoriaId || !valor) return
+  function mudarTipo(novo) {
+    setTipo(novo)
+    setCategoriaId('')
+  }
 
-    const regra = regras.find((r) => valor.toLowerCase().includes(r.padrao.toLowerCase()))
-    if (!regra) return
+  function alterarDescricao(texto) {
+    setDescricao(texto)
+    if (categoriaId || !texto) return
 
-    const categoriaSugerida = categories.find((c) => c.id === regra.categoria_id)
-    if (categoriaSugerida && categoriaSugerida.tipo === tipo) {
-      setCategoriaId(categoriaSugerida.id)
-    }
+    const regra = regras.find((r) => texto.toLowerCase().includes(r.padrao.toLowerCase()))
+    const sugerida = regra && categories.find((c) => c.id === regra.categoria_id)
+    if (sugerida && sugerida.tipo === tipo) setCategoriaId(sugerida.id)
   }
 
   async function submeter(e) {
     e.preventDefault()
+    const transferencia = tipo === 'transferencia'
+    if (transferencia && !contaDestinoId) {
+      setErro('Escolhe a conta destino.')
+      return
+    }
     setErro(null)
-    setAEnviar(true)
+    setAGuardar(true)
 
-    const payload =
-      tipo === 'transferencia'
-        ? {
-            household_id: householdId,
-            account_id: accountId,
-            conta_destino_id: contaDestinoId,
-            user_id: userId,
-            tipo,
-            valor: Number(valor),
-            data,
-            descricao,
-            etiqueta: etiqueta.trim() || null,
-          }
-        : {
-            household_id: householdId,
-            account_id: accountId,
-            user_id: userId,
-            tipo,
-            valor: Number(valor),
-            categoria_id: categoriaId || null,
-            data,
-            descricao,
-            etiqueta: etiqueta.trim() || null,
-          }
+    const campos = {
+      tipo,
+      account_id: accountId,
+      conta_destino_id: transferencia ? contaDestinoId : null,
+      categoria_id: transferencia ? null : categoriaId || null,
+      valor: Number(valor),
+      data,
+      descricao,
+      etiqueta: etiqueta.trim() || null,
+    }
 
-    const { error } = await supabase.from('transactions').insert(payload)
+    const { error } = transacao
+      ? await supabase.from('transactions').update(campos).eq('id', transacao.id)
+      : await supabase.from('transactions').insert({ ...campos, household_id: householdId, user_id: userId })
 
-    setAEnviar(false)
-
+    setAGuardar(false)
     if (error) {
       setErro(error.message)
       return
     }
-
-    setValor('')
-    setDescricao('')
-    setCategoriaId('')
-    setContaDestinoId('')
-    setData(dataLocalISO())
-    setEtiqueta('')
-    setSucesso(true)
-    setTimeout(() => setSucesso(false), 2500)
-    onCriada()
-  }
-
-  function limpar() {
-    setValor('')
-    setDescricao('')
-    setCategoriaId('')
-    setContaDestinoId('')
-    setData(dataLocalISO())
-    setEtiqueta('')
-    setErro(null)
+    onGuardada()
   }
 
   return (
-    <form onSubmit={submeter} className="nova-transacao">
-      <div className="tipo-toggle">
-        <button type="button" className={tipo === 'despesa' ? 'ativo' : ''} onClick={() => setTipo('despesa')}>
-          Despesa
-        </button>
-        <button type="button" className={tipo === 'receita' ? 'ativo' : ''} onClick={() => setTipo('receita')}>
-          Receita
-        </button>
-        <button
-          type="button"
-          className={tipo === 'transferencia' ? 'ativo' : ''}
-          onClick={() => setTipo('transferencia')}
-        >
-          Transferência
-        </button>
-      </div>
+    <form onSubmit={submeter} className="form-despesa">
+      {!transacao && (
+        <div className="tipo-toggle" role="group" aria-label="Tipo de transação">
+          {TIPOS.map(([valorTipo, rotulo]) => (
+            <button
+              key={valorTipo}
+              type="button"
+              className={tipo === valorTipo ? 'ativo' : ''}
+              aria-pressed={tipo === valorTipo}
+              onClick={() => mudarTipo(valorTipo)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className="nova-transacao__linha nova-transacao__linha--3">
+      <div className="nova-transacao__linha form-despesa__par">
         <label>
           Valor
           <input
+            name="valor"
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0.01"
             placeholder="0,00 €"
@@ -146,83 +139,103 @@ export default function TransactionForm({
           />
         </label>
         <label>
+          Data
+          <input name="data" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+        </label>
+      </div>
+
+      <div className="nova-transacao__linha">
+        <label>
           Descrição
           <input
-            type="text"
-            placeholder="Descrição opcional"
+            name="descricao"
+            autoComplete="off"
+            placeholder="Opcional"
             value={descricao}
             onChange={(e) => alterarDescricao(e.target.value)}
           />
         </label>
-        <label>
-          Etiqueta
-          <input
-            type="text"
-            list="etiquetas-existentes"
-            placeholder="Ex: Férias Cabo Verde"
-            value={etiqueta}
-            onChange={(e) => setEtiqueta(e.target.value)}
-          />
-          <datalist id="etiquetas-existentes">
-            {etiquetasExistentes.map((e) => (
-              <option key={e} value={e} />
-            ))}
-          </datalist>
-        </label>
       </div>
 
-      <div className="nova-transacao__linha nova-transacao__linha--3">
-        <div className="nova-transacao__campo" role="group" aria-label="Conta">
-          <span>Conta</span>
+      <div className="nova-transacao__linha">
+        <div className="nova-transacao__campo" role="group" aria-labelledby={contaRotuloId}>
+          <span id={contaRotuloId}>{tipo === 'transferencia' ? 'Conta de origem' : 'Conta'}</span>
           <div className="tipo-toggle tipo-toggle--deslizante">
-            {accounts.map((a) => (
+            {contas.map((a) => (
               <button
                 key={a.id}
                 type="button"
                 className={a.id === accountId ? 'ativo' : ''}
                 aria-pressed={a.id === accountId}
-                onClick={() => onAccountChange(a.id)}
+                onClick={() => {
+                  setAccountId(a.id)
+                  if (a.id === contaDestinoId) setContaDestinoId('')
+                }}
               >
                 {a.nome}
               </button>
             ))}
           </div>
         </div>
+      </div>
 
+      <div className="nova-transacao__linha">
         {tipo === 'transferencia' ? (
-          <label>
-            Conta destino
-            <select value={contaDestinoId} onChange={(e) => setContaDestinoId(e.target.value)} required>
-              <option value="">Escolher conta</option>
+          <div className="nova-transacao__campo" role="group" aria-labelledby={destinoRotuloId}>
+            <span id={destinoRotuloId}>Conta destino</span>
+            <div className="tipo-toggle tipo-toggle--deslizante">
               {contasDestino.map((a) => (
-                <option key={a.id} value={a.id}>
+                <button
+                  key={a.id}
+                  type="button"
+                  className={a.id === contaDestinoId ? 'ativo' : ''}
+                  aria-pressed={a.id === contaDestinoId}
+                  onClick={() => setContaDestinoId(a.id)}
+                >
                   {a.nome}
-                </option>
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
         ) : (
-          <label>
-            Categoria
+          <div className="nova-transacao__campo" role="group" aria-labelledby={categoriaRotuloId}>
+            <span id={categoriaRotuloId}>Categoria</span>
             <CategoriaSeletor categorias={categoriasDoTipo} value={categoriaId} onChange={setCategoriaId} opcional />
-          </label>
+          </div>
         )}
+      </div>
 
+      <div className="nova-transacao__linha">
         <label>
-          Data
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+          Etiqueta
+          <input
+            name="etiqueta"
+            autoComplete="off"
+            list="etiquetas-existentes"
+            placeholder="Ex: Férias Cabo Verde"
+            value={etiqueta}
+            onChange={(e) => setEtiqueta(e.target.value)}
+          />
+          <datalist id="etiquetas-existentes">
+            {etiquetasExistentes.map((et) => (
+              <option key={et} value={et} />
+            ))}
+          </datalist>
         </label>
       </div>
 
-      {erro && <p className="erro">{erro}</p>}
-      {sucesso && <p className="sucesso">Transação adicionada.</p>}
+      {erro && (
+        <p className="erro" role="alert">
+          {erro}
+        </p>
+      )}
 
-      <div className="nova-transacao__acoes">
-        <button type="button" className="botao-link" onClick={limpar}>
+      <div className="modal__acoes">
+        <button type="button" className="botao-secundario" onClick={onCancelar}>
           Cancelar
         </button>
-        <button type="submit" className="botao-primario" disabled={aEnviar}>
-          Adicionar
+        <button type="submit" className="botao-primario" disabled={aGuardar}>
+          {aGuardar ? 'A guardar…' : transacao ? 'Guardar' : 'Adicionar'}
         </button>
       </div>
     </form>

@@ -1,162 +1,70 @@
-import { useState } from 'react'
-import CategoriaSeletor from './CategoriaSeletor'
-import { supabase } from '../lib/supabaseClient'
+import MenuAcoes from './MenuAcoes'
 import { nomeCompletoCategoria } from '../lib/categorias'
 
-function LinhaEdicao({ tx, categorias, onGuardado, onCancelar }) {
-  const categoriasDoTipo = categorias.filter((c) => c.tipo === tx.tipo)
-  const [data, setData] = useState(tx.data)
-  const [descricao, setDescricao] = useState(tx.descricao ?? '')
-  const [categoriaId, setCategoriaId] = useState(tx.categoria_id ?? '')
-  const [valor, setValor] = useState(String(tx.valor))
-  const [etiqueta, setEtiqueta] = useState(tx.etiqueta ?? '')
-  const [erro, setErro] = useState(null)
+const formatoValor = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
+const formatoMes = new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' })
+const formatoMesCurto = new Intl.DateTimeFormat('pt-PT', { month: 'short' })
 
-
-  async function guardar(e) {
-    e.preventDefault()
-    setErro(null)
-
-    const etiquetaFinal = etiqueta.trim() || null
-    const payload =
-      tx.tipo === 'transferencia'
-        ? { data, descricao, valor: Number(valor), etiqueta: etiquetaFinal }
-        : { data, descricao, valor: Number(valor), categoria_id: categoriaId || null, etiqueta: etiquetaFinal }
-
-    const { error } = await supabase.from('transactions').update(payload).eq('id', tx.id)
-
-    if (error) {
-      setErro(error.message)
-      return
-    }
-
-    onGuardado()
+function porMes(transacoes) {
+  const grupos = []
+  for (const tx of transacoes) {
+    const chave = tx.data.slice(0, 7)
+    const ultimo = grupos[grupos.length - 1]
+    if (ultimo?.chave === chave) ultimo.linhas.push(tx)
+    else grupos.push({ chave, linhas: [tx] })
   }
-
-  return (
-    <tr>
-      <td>
-        <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-      </td>
-      <td>
-        <input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
-      </td>
-      <td>
-        {tx.tipo === 'transferencia' ? (
-          '—'
-        ) : (
-          <CategoriaSeletor categorias={categoriasDoTipo} value={categoriaId} onChange={setCategoriaId} opcional />
-        )}
-      </td>
-      <td>{tx.accounts?.nome}</td>
-      <td>
-        <input type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
-      </td>
-      <td>
-        <input value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Ex: Férias" />
-      </td>
-      <td>
-        <button type="button" className="botao-link" onClick={guardar}>
-          Guardar
-        </button>
-        <button type="button" className="botao-link" onClick={onCancelar}>
-          Cancelar
-        </button>
-        {erro && <p className="erro">{erro}</p>}
-      </td>
-    </tr>
-  )
+  return grupos
 }
 
-function sinalEcor(tx, contaEmFoco) {
-  if (tx.tipo === 'receita') return { sinal: '+', cor: '#2f7a4f' }
-  if (tx.tipo === 'despesa') return { sinal: '-', cor: 'var(--danger)' }
-  // transferência: o sinal depende de a conta em foco ser a origem (sai) ou o destino (entra)
-  if (contaEmFoco && tx.account_id === contaEmFoco) return { sinal: '-', cor: 'var(--danger)' }
-  if (contaEmFoco && tx.conta_destino_id === contaEmFoco) return { sinal: '+', cor: '#2f7a4f' }
-  return { sinal: '', cor: 'var(--muted)' }
+function detalhe(tx, categorias) {
+  if (tx.tipo === 'transferencia') {
+    return `${tx.accounts?.nome ?? 'Conta privada'} → ${tx.conta_destino?.nome ?? 'Conta privada'}`
+  }
+  return [nomeCompletoCategoria(categorias, tx.categoria_id), tx.accounts?.nome, tx.etiqueta].filter(Boolean).join(' · ')
 }
 
-export default function TransactionList({ transactions, categorias = [], contaEmFoco, onAtualizado }) {
-  const [editandoId, setEditandoId] = useState(null)
-
-  async function apagar(id) {
-    if (!window.confirm('Apagar esta transação? Podes restaurá-la em "Ver transações apagadas".')) return
-
-    const { error } = await supabase
-      .from('transactions')
-      .update({ apagada_em: new Date().toISOString() })
-      .eq('id', id)
-
-    if (!error) onAtualizado()
-  }
-
-  if (transactions.length === 0) return <p>Ainda não há transações.</p>
-
-  return (
-    <div className="transaction-list__wrap">
-    <table className="transaction-list">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Descrição</th>
-          <th>Categoria</th>
-          <th>Conta</th>
-          <th>Valor</th>
-          <th>Etiqueta</th>
-          {onAtualizado && <th>Ações</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => {
-          if (editandoId === tx.id) {
+export default function TransactionList({ transactions, categorias = [], onEditar, onApagar }) {
+  return porMes(transactions).map(({ chave, linhas }) => {
+    const [ano, mes] = chave.split('-').map(Number)
+    return (
+      <section key={chave} className="transacoes-mes" aria-label={formatoMes.format(new Date(ano, mes - 1, 1))}>
+        <h2 className="transacoes-mes__titulo">{formatoMes.format(new Date(ano, mes - 1, 1))}</h2>
+        <ul className="despesas-lista__linhas">
+          {linhas.map((tx) => {
+            const dia = Number(tx.data.slice(8, 10))
+            const sinal = tx.tipo === 'receita' ? '+' : tx.tipo === 'despesa' ? '−' : ''
+            const titulo = tx.descricao || (tx.tipo === 'transferencia' ? 'Transferência' : tx.categories?.nome) || '—'
             return (
-              <LinhaEdicao
-                key={tx.id}
-                tx={tx}
-                categorias={categorias}
-                onGuardado={() => {
-                  setEditandoId(null)
-                  onAtualizado()
-                }}
-                onCancelar={() => setEditandoId(null)}
-              />
+              <li key={tx.id} className="despesa-linha">
+                <span className="despesa-linha__data">
+                  <strong>{dia}</strong>
+                  {formatoMesCurto.format(new Date(ano, mes - 1, dia)).replace('.', '')}
+                </span>
+                <i
+                  className="despesa-linha__cor"
+                  style={{ background: tx.tipo === 'transferencia' ? 'var(--muted)' : tx.categories?.cor ?? 'var(--border)' }}
+                  aria-hidden="true"
+                />
+                <span className="despesa-linha__texto">
+                  <span className="despesa-linha__descricao">{titulo}</span>
+                  <span className="despesa-linha__detalhe">{detalhe(tx, categorias)}</span>
+                </span>
+                <span className={`despesa-linha__valor despesa-linha__valor--${tx.tipo}`}>
+                  {sinal}
+                  {formatoValor.format(tx.valor)}
+                </span>
+                <MenuAcoes
+                  rotulo={`Ações de ${titulo}`}
+                  acoes={[
+                    { rotulo: 'Editar', onClick: () => onEditar(tx) },
+                    { rotulo: 'Apagar', perigo: true, onClick: () => onApagar(tx) },
+                  ]}
+                />
+              </li>
             )
-          }
-
-          const { sinal, cor } = sinalEcor(tx, contaEmFoco)
-
-          return (
-            <tr key={tx.id} className={tx.tipo}>
-              <td>{tx.data}</td>
-              <td>
-                {tx.descricao || '—'}
-                {tx.tipo === 'transferencia' && ` → ${tx.conta_destino?.nome ?? 'Conta privada'}`}
-              </td>
-              <td style={{ color: tx.categories?.cor }}>
-                {nomeCompletoCategoria(categorias, tx.categoria_id) ?? '—'}
-              </td>
-              <td>{tx.accounts?.nome ?? (tx.tipo === 'transferencia' ? 'Conta privada' : '')}</td>
-              <td className="transaction-list__valor" style={{ color: cor }}>
-                {sinal}
-                {Number(tx.valor).toFixed(2)} €
-              </td>
-              <td>{tx.etiqueta || '—'}</td>
-              {onAtualizado && (
-                <td>
-                  <button type="button" className="botao-link" onClick={() => setEditandoId(tx.id)}>
-                    Editar
-                  </button>
-                  <button type="button" className="botao-link" onClick={() => apagar(tx.id)}>
-                    Apagar
-                  </button>
-                </td>
-              )}
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
-    </div>
-  )
+          })}
+        </ul>
+      </section>
+    )
+  })
 }
