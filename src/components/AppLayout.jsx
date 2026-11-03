@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabaseClient'
+import BarraNavegacao from './BarraNavegacao.jsx'
+import MenuPerfil from './MenuPerfil.jsx'
 import NotificationsBell from './NotificationsBell.jsx'
 import { aplicarTema, obterTemaInicial } from '../lib/theme.js'
 
@@ -28,7 +30,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
   const { signOut, user } = useAuth()
   const [tema, setTema] = useState(obterTemaInicial)
   const [meuNome, setMeuNome] = useState(null)
-  const [sidebarAberta, setSidebarAberta] = useState(false)
+  const { pathname } = useLocation()
 
   useEffect(() => {
     supabase
@@ -46,43 +48,43 @@ export default function AppLayout({ household, contas, categorias, regras, atual
     setTema(novoTema)
   }
 
+  const nomeVisivel = meuNome ?? user?.email?.split('@')[0]
+  const admin = user?.email === EMAIL_ADMIN
+
   return (
     <div className="app-layout">
-      <button
-        type="button"
-        className="sidebar__hamburger"
-        onClick={() => setSidebarAberta(true)}
-        title="Abrir menu"
-        aria-label="Abrir menu"
-      >
-        ☰
-      </button>
+      <p className="app-marca-movel so-movel">TwoFold</p>
       <div className="app-canto-superior-direito">
-        <Link to="/ajuda" className="notificacoes__botao" title="Como funciona a app">
+        <Link to="/ajuda" className="notificacoes__botao so-desktop" title="Como funciona a app">
           ❓
         </Link>
-        <button type="button" className="notificacoes__botao" onClick={alternarTema} title="Alternar tema">
-          {tema === 'dark' ? '☀️' : '🌙'}
+        <button
+          type="button"
+          className="notificacoes__botao"
+          onClick={alternarTema}
+          title="Alternar tema"
+          aria-label="Alternar tema"
+        >
+          <span className="so-desktop">{tema === 'dark' ? '☀️' : '🌙'}</span>
+          <svg className="icone-topo so-movel" viewBox="0 0 24 24" aria-hidden="true">
+            {tema === 'dark' ? (
+              <>
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+              </>
+            ) : (
+              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+            )}
+          </svg>
         </button>
         <NotificationsBell householdId={household.id} />
+        <MenuPerfil nome={nomeVisivel} onSair={signOut} />
       </div>
-      {sidebarAberta && (
-        <div className="sidebar__backdrop" onClick={() => setSidebarAberta(false)} />
-      )}
-      <aside className={sidebarAberta ? 'sidebar aberta' : 'sidebar'}>
+      <aside className="sidebar">
         <div className="sidebar__topo">
           <p className="sidebar__marca">TwoFold</p>
-          <button
-            type="button"
-            className="sidebar__fechar"
-            onClick={() => setSidebarAberta(false)}
-            title="Fechar menu"
-            aria-label="Fechar menu"
-          >
-            ✕
-          </button>
         </div>
-        <nav onClick={() => setSidebarAberta(false)}>
+        <nav>
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
               {link.label}
@@ -96,7 +98,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
             </NavLink>
           ))}
 
-          {user?.email === EMAIL_ADMIN && (
+          {admin && (
             <>
               <p className="sidebar__grupo">Admin</p>
               <NavLink to="/convites" className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
@@ -106,7 +108,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
           )}
         </nav>
         <div className="sidebar__rodape">
-          <Link to="/conta" className="sidebar__utilizador" title="A minha conta" onClick={() => setSidebarAberta(false)}>
+          <Link to="/conta" className="sidebar__utilizador" title="A minha conta">
             <svg
               className="sidebar__utilizador-icone"
               viewBox="0 0 24 24"
@@ -117,7 +119,7 @@ export default function AppLayout({ household, contas, categorias, regras, atual
             >
               <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5Z" />
             </svg>
-            <span className="sidebar__utilizador-nome">{meuNome ?? user?.email?.split('@')[0]}</span>
+            <span className="sidebar__utilizador-nome">{nomeVisivel}</span>
           </Link>
           <button type="button" className="botao-link" onClick={signOut}>
             Sair
@@ -125,8 +127,18 @@ export default function AppLayout({ household, contas, categorias, regras, atual
         </div>
       </aside>
       <main className="app-content">
+        {pathname.startsWith('/orcamentos/') && (
+          <nav className="seletor-orcamento so-movel" aria-label="Tipo de orçamento">
+            {ORCAMENTO_LINKS.map((link) => (
+              <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <Outlet context={{ household, contas, categorias, regras, atualizar, atualizarHousehold }} />
       </main>
+      <BarraNavegacao admin={admin} />
     </div>
   )
 }
