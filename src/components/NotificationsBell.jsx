@@ -16,8 +16,13 @@ export default function NotificationsBell({ householdId }) {
         className="notificacoes__botao"
         onClick={() => setAberto((a) => !a)}
         aria-expanded={aberto}
+        aria-label="Notificações"
       >
-        🔔
+        <span className="so-desktop">🔔</span>
+        <svg className="icone-topo so-movel" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7Z" />
+          <path d="M10 20a2 2 0 0 0 4 0" />
+        </svg>
         {notificacoes.length > 0 && <span className="notificacoes__contador">{notificacoes.length}</span>}
       </button>
 

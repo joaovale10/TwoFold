@@ -26,18 +26,20 @@ O plano opta explicitamente por Supabase em vez de um backend Node/Express próp
 ## Modelo de dados (Supabase/Postgres)
 
 ```
-users (gerido pelo Supabase Auth) — só 2 utilizadores fixos: Vale e Clara, sem registo público
+users (gerido pelo Supabase Auth) — sem registo público, só entra quem tem convite
 
 households (id, nome)
-household_members (household_id, user_id, nome [ex: "Vale"/"Clara", usado na página Casal])
+household_members (household_id, user_id, nome [usado na página Casal], username [login alternativo ao email])
+household_invites (id, codigo, household_id, email, usado, expira_em, criado_por)
 
 accounts (id, household_id, owner_user_id [null = casal], tipo [pessoal/casal], nome, saldo_inicial, ativa)
 
-categories (id, household_id [null = global], parent_id [subcategoria], nome, tipo [receita/despesa], cor)
+categories (id, household_id [null = global], owner_user_id [null = casal; preenchido = individual], parent_id [subcategoria], nome, tipo [receita/despesa], cor)
 
 transactions (
   id, household_id, account_id, conta_destino_id [só em transferências], user_id,
-  tipo [receita/despesa/transferencia], valor, categoria_id, data, descricao
+  tipo [receita/despesa/transferencia], valor, categoria_id, data, descricao, etiqueta, apagada_em,
+  fixed_expense_id [despesa fixa de origem; único com data]
 )
 
 budgets (id, household_id, tipo [mensal/anual], categoria_id, limite_mensal)
@@ -47,23 +49,27 @@ fixed_expenses (id, household_id, account_id, categoria_id, descricao, valor, di
 savings_goals (id, household_id, account_id, nome, valor_objetivo, data_limite, contribuicao_mensal)
 
 category_rules (id, household_id, padrao, categoria_id)
+
+budget_plans (id, household_id, titulo, notas)
+budget_plan_incomes (id, household_id, plan_id, user_id, liquido, subsidio_valor, subsidio_nota, percentual_manual)
+budget_plan_items (id, household_id, plan_id, secao [comum/individual], user_id, descricao, valor, categoria_id, poupanca)
 ```
 
 Pontos-chave de design:
-- Os dados são delimitados por `household_id` (RLS via `is_household_member()`), não apenas por `user_id` — há sempre um único household partilhado pelo Vale e pela Clara.
-- **Privacidade por conta:** dentro do mesmo household, uma conta `pessoal` só é visível/editável por quem é o `owner_user_id`; a conta `casal` é visível/editável por ambos. As transações herdam essa privacidade através do `account_id` (função `can_access_account()` no schema). `budgets`, `categories` e `fixed_expenses` continuam totalmente partilhados entre os dois membros — a privacidade só existe ao nível de `accounts`/`transactions`.
-- Sem registo público: a app não tem ecrã de "criar conta". Os 2 utilizadores e o household são criados uma vez via SQL (ver secção de seeding no fim de `supabase/schema.sql`).
+- Os dados são delimitados por `household_id` (RLS via `is_household_member()`), não apenas por `user_id`. Hoje só existe o household Vale & Clara, mas o modelo suporta vários, com até 2 membros cada e um household por utilizador — nunca assumir um único household em SQL ou código.
+- **Privacidade por conta:** dentro do mesmo household, uma conta `pessoal` só é visível/editável por quem é o `owner_user_id`; a conta `casal` é visível/editável por ambos. As transações herdam essa privacidade através do `account_id` (função `can_access_account()` no schema). `budgets` e `fixed_expenses` continuam totalmente partilhados entre os dois membros, e `categories` também, exceto as individuais (`owner_user_id` preenchido, só visíveis para o dono).
+- Sem registo público: o admin cria um espaço novo e o convite em `/convites` (`admin_criar_espaco`), um membro pode convidar o parceiro (`convidar_parceiro`), e o convite é aceite em `/convite/:codigo` (`resgatar_convite`).
 - **Transferências** (`tipo = 'transferencia'`) movem dinheiro entre `account_id` e `conta_destino_id` sem contar como despesa/receita nas somas — ficam de fora de qualquer soma que filtre por `tipo in ('receita','despesa')`.
 - Existe um documento de especificação mais amplo, `docs/especificacao-produto.md`, com o produto completo em 4 fases. A implementação segue esse roadmap por fases — não tentar tudo de uma vez. O que falta das Fases 3/4 está detalhado em `docs/roadmap.md`.
 
 ## Funcionalidades
 
-1. Login (só entrar — sem registo, só existem o Vale e a Clara)
+1. Login por email ou username (só entrar — sem registo, novos utilizadores chegam por convite)
 2. **Resumo** (`/resumo`, página inicial): património, saldo pessoal vs. casal, receitas/despesas/poupança do mês com evolução face ao mês anterior, despesas por categoria, orçamento mensal, "disponível para gastar" + limite diário, próximos vencimentos de despesas fixas — com filtro Tudo/A minha conta/Casal
 3. Transações por conta (receita/despesa/transferência: valor, categoria, data, descrição), com saldo, filtro de datas (De/Até ou "Todas as datas"), pesquisa por texto e edição inline
 4. **Casal** (`/casal`): resumo do mês só das contas `casal` — receitas, despesas, poupança/disponível, contribuições por pessoa (usa `household_members.nome`), despesas conjuntas por categoria, taxa de poupança vs. média de 6 meses
 5. Contas: cartões lado a lado (`AccountCard.jsx`), cada um cria as suas contas pessoais (privadas) e contas casal (partilhadas), com saldo inicial, ícone (só visual, `localStorage`, não vai para a BD) e estado ativa/inativa — editável (nome, saldo inicial); saldo de cada conta = saldo inicial + movimentos (incluindo transferências); **só contas ativas aparecem nos dropdowns de escolher conta** ao criar transações, despesas fixas ou objetivos
-6. Categorias com subcategorias (predefinidas + personalizáveis) — uma subcategoria pode ter como categoria-mãe tanto uma categoria própria como uma predefinida
+6. Categorias com subcategorias, por household (casal ou individuais). O schema prevê categorias globais predefinidas, mas não existe nenhuma em produção
 7. Despesas Fixas / Recorrentes (`/despesas-fixas`): cada despesa fixa tem `account_id`, `dia_vencimento`, `data_inicio` e `ultima_geracao`. Ao carregar a app (`App.jsx` → `gerarTransacoesRecorrentes` em `src/lib/recorrentes.js`), gera automaticamente as transações reais em falta desde `ultima_geracao` (ou `data_inicio`) até hoje, uma por mês, e atualiza `ultima_geracao` — idempotente, seguro correr em cada load
 8. Orçamentos: Mensais e Anuais (por categoria, com progresso face ao gasto real)
 9. **Objetivos** (`/objetivos`, tabela `savings_goals`): cada objetivo liga-se a uma conta real (`account_id`) — o "valor já poupado" é sempre o saldo dessa conta, não um contador à parte. Tem `valor_objetivo`, `data_limite` e `contribuicao_mensal` opcionais; a previsão de quando a meta é atingida usa o ritmo real dos últimos 6 meses de movimentos na conta (`ritmoMensalAtual` em `GoalsPage.jsx`), não o valor pretendido introduzido pelo utilizador (esse só é mostrado como referência)
@@ -96,9 +102,14 @@ Ainda não há testes configurados.
 ```
 src/
   main.jsx                 # entry point, monta BrowserRouter + AuthProvider
-  App.jsx                   # rotas: /login (público) + EspacoPrivado (carrega household/contas/categorias, gera recorrentes)
-  context/AuthContext.jsx   # sessão Supabase Auth, expõe useAuth() (só signInWithPassword + signOut, sem signUp)
+  App.jsx                   # rotas públicas (/login, /convite/:codigo, /redefinir-password) + EspacoPrivado (carrega household/contas/categorias, gera recorrentes)
+  context/AuthContext.jsx   # sessão Supabase Auth, expõe useAuth()
   lib/
+    categorias.js             # nomeCompletoCategoria() — "Categoria / Subcategoria"
+    datas.js                  # dentroDoMes()/dentroDoAno()
+    saldo.js                  # saldoDaConta()
+    orcamentoPlano.js         # cálculos do Plano de Orçamento
+    pwa.js                    # forcarAtualizacao() do service worker
     supabaseClient.js        # cliente Supabase (lê VITE_SUPABASE_URL/ANON_KEY)
     recorrentes.js            # gerarTransacoesRecorrentes() — cria transações reais em falta a partir de fixed_expenses
     notifications.js          # gerarNotificacoes() — calcula notificações em tempo real (orçamentos, despesas fixas, objetivos)
@@ -114,6 +125,13 @@ src/
     FixedExpensesPage.jsx     # /despesas-fixas: CRUD de despesas fixas (conta, categoria, dia de vencimento), edição inline na tabela
     BudgetsPage.jsx           # /orcamentos/:tipo (mensais|anuais): limite por categoria, progresso face ao gasto real
     GoalsPage.jsx             # /objetivos: metas de poupança ligadas a uma conta real, com previsão de data
+    StatsPage.jsx             # /stats: estatísticas de despesas
+    TagsPage.jsx              # /etiquetas: total gasto por etiqueta, dividido por categoria
+    ConvitesPage.jsx          # /convites: criar espaços e ver o estado dos convites (admin)
+    AceitarConvitePage.jsx    # /convite/:codigo: aceitar convite (público)
+    RedefinirPasswordPage.jsx # /redefinir-password (público)
+    ContaPage.jsx             # /conta: nome, username, nome do espaço
+    AjudaPage.jsx             # /ajuda
   components/
     AppLayout.jsx            # sidebar de navegação + toggle de tema + sino de notificações + <Outlet context={{ household, contas, categorias, regras, atualizar }} />
     NotificationsBell.jsx    # dropdown de notificações na sidebar
@@ -121,18 +139,26 @@ src/
     AccountCard.jsx          # cartão de conta: ícone (localStorage), saldo, editar (nome/saldo inicial), ativar/desativar
     TransactionForm.jsx      # criar transação (despesa/receita/transferência), conta controlada pelo pai, sugere categoria via regras; só lista contas ativas
     TransactionList.jsx      # tabela de transações, com edição inline por linha quando recebe `onAtualizado`
-supabase/schema.sql           # schema completo + RLS + seeding do Vale/Clara (comentado no fim), corre no SQL editor do Supabase
-scripts/reset-password.js     # script pontual para repor a password de um utilizador via Supabase Admin API
-docs/
-  especificacao-produto.md    # spec original completa (4 fases) que guia a implementação
-  roadmap.md                   # o que falta
-  plano-inicial.md             # plano inicial de stack/custos (histórico, pré-especificação)
-  instrucoes-fase1.md          # to-do original que arrancou a Fase 1 (histórico)
-  superpowers/plans/            # planos de implementação gerados durante o desenvolvimento
+    CategoriaSeletor.jsx     # botão + popup de categoria → subcategoria
+    MonthlyBarChart.jsx      # gráfico de barras mensal (recharts)
+    PlanoOrcamento.jsx       # Plano de Orçamento, no separador Mensal de /orcamentos
+    LinhasPlano.jsx          # linhas de despesa do plano
+    ResumoPlano.jsx          # resumo final e poupança do plano
+supabase/
+  schema.sql                  # schema completo + RLS, só para um projeto novo
+  aplicar-agora.sql           # SQL pendente para o SQL Editor (fora do git), limpo a cada ronda
+  functions/autenticar-username/ # Edge Function: login e recuperação por username, sem revelar o email
+scripts/reset-password.js     # repor a password de um utilizador via Supabase Admin API (fora do git)
+docs/                         # fora do git
+  CHANGELOG.md                # histórico de alterações
+  roadmap.md                  # o que falta + histórico de cada sessão
+  sessoes/AAAA-MM-DD.md       # pontos a trabalhar, definidos pelo utilizador
+  especificacao-produto.md    # spec original completa (4 fases)
+  orcamento-casal.md          # cálculo original do orçamento do casal, que deu origem ao Plano de Orçamento
+  superpowers/specs/          # especificações de funcionalidades
 ```
 
-Fluxo de dados: `App.jsx` (`EspacoPrivado`) carrega o `household` do utilizador autenticado (via `household_members`) e as `accounts`/`categories`; passa tudo a `AppLayout`, que expõe via `useOutletContext()` a cada página filha. Um utilizador autenticado sem `household_members` (conta criada mas convite não resgatado, ou erro) vê um ecrã "Sem acesso a nenhum espaço" com botão de sair. RLS cobre dois níveis: `is_household_member(household_id)` (todas as tabelas) e `can_access_account(account_id)` (só `accounts`/`transactions`, para a privacidade das contas pessoais). Ver secção de Convites acima para como novos households (para além do Vale/Clara original) se criam sem SQL manual.
-
+Fluxo de dados: `App.jsx` (`EspacoPrivado`) carrega o `household` do utilizador autenticado (via `household_members`) e as `accounts`/`categories`; passa tudo a `AppLayout`, que expõe via `useOutletContext()` a cada página filha. Um utilizador autenticado sem `household_members` (conta criada mas convite não resgatado, ou erro) vê um ecrã "Sem acesso a nenhum espaço" com botão de sair. RLS cobre dois níveis: `is_household_member(household_id)` (todas as tabelas) e `can_access_account(account_id)` (só `accounts`/`transactions`, para a privacidade das contas pessoais).
 ## Próximos passos (não feitos ainda)
 
 - Ver `docs/roadmap.md` — secção "Escalabilidade Pro" para ideias adiadas de propósito (ex. internacionalização).
@@ -156,6 +182,27 @@ Atua como especialista em desenvolvimento web full-stack, engenharia de dados e 
 ### Registo de alterações
 
 Sempre que se implementa ou altera algo de relevante no código (feature, refactor, bugfix), acrescentar uma entrada no topo de `docs/CHANGELOG.md` a resumir o que foi feito e porquê — não é um diff, é para se perceber rapidamente o histórico sem reler código ou sessões antigas. Isto é uma exceção deliberada à regra acima de "não criar documentação não pedida": este ficheiro específico deve ser mantido sempre atualizado, por pedido explícito do utilizador.
+
+### Trabalho visual
+
+Qualquer alteração visual (UI, layout, CSS, mobile) é planeada e apresentada ao utilizador antes de implementar, com as skills certas para o tamanho da alteração e só nos ecrãs e ficheiros afetados:
+
+| Fase | Ajuste pequeno | Ecrã novo ou remodelado |
+|---|---|---|
+| Direção visual: `frontend-design`, mantendo a paleta de `src/index.css` | Não usar | Usar |
+| Verificar no browser: `playwright-cli`, com capturas a 390 px e 1280 px | Só o ecrã alterado | Ecrãs afetados, em modo claro e escuro |
+| Rever: `web-design-guidelines` | Só se mexer em formulários, navegação ou acessibilidade | Ficheiros alterados, nunca a app inteira |
+
+- Corrigir só o que foi pedido e reportar o resto, sem o implementar.
+- O localhost usa a BD de produção: no browser, só navegar e tirar capturas, sem criar, editar ou apagar dados sem autorização. O login é feito pelo utilizador.
+- Não instalar skills com alertas críticos de segurança.
+
+### Ficheiros de sessão
+
+Exceção deliberada à regra de "não criar documentação não pedida", por pedido explícito do utilizador. Em cada sessão:
+
+- **Pontos a trabalhar:** no início, ler o ficheiro mais recente de `docs/sessoes/` e criar `docs/sessoes/AAAA-MM-DD.md` com a data do dia, se ainda não existir. É o utilizador quem define os pontos deste ficheiro.
+- **Histórico:** manter em `docs/roadmap.md` uma secção `## Histórico - DD/MM/AAAA`, atualizada depois de cada operação relevante, com o que ficou pendente. Não incluir passwords, chaves nem dados de outros utilizadores.
 
 ### Gestão de Sessão (Lembrete para o Utilizador e IA)
 * Sempre que o uso de ferramentas MCP (como leitura de browser) terminar, a sessão deve ser otimizada com o comando `/compact`.

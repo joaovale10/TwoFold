@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { dataLocalISO } from './datas'
 
 function* mesesEntre(inicio, fim) {
   const atual = { ano: inicio.ano, mes: inicio.mes }
@@ -10,10 +11,6 @@ function* mesesEntre(inicio, fim) {
       atual.ano += 1
     }
   }
-}
-
-function dataISO(ano, mes, dia) {
-  return new Date(ano, mes, dia).toISOString().slice(0, 10)
 }
 
 function proximoMes({ ano, mes }) {
@@ -56,15 +53,19 @@ export async function gerarTransacoesRecorrentes(householdId, userId) {
         tipo: 'despesa',
         valor: despesa.valor,
         categoria_id: despesa.categoria_id,
-        data: dataISO(ano, mes, dia),
+        data: dataLocalISO(dataVencimento),
         descricao: despesa.descricao,
+        fixed_expense_id: despesa.id,
       })
-      ultimaDataGerada = dataISO(ano, mes, dia)
+      ultimaDataGerada = dataLocalISO(dataVencimento)
     }
 
     if (novasTransacoes.length === 0) continue
 
-    const { error: erroInsert } = await supabase.from('transactions').insert(novasTransacoes)
+    // A BD garante uma transação por despesa e data, mesmo com os dois membros a abrir a app ao mesmo tempo.
+    const { error: erroInsert } = await supabase
+      .from('transactions')
+      .upsert(novasTransacoes, { onConflict: 'fixed_expense_id,data', ignoreDuplicates: true })
     if (erroInsert) {
       console.error('Falha ao gerar transações recorrentes:', erroInsert)
       continue

@@ -1,9 +1,3 @@
-export function nivelDaCategoria(categorias, categoriaId) {
-  const cat = categorias.find((c) => c.id === categoriaId)
-  if (!cat) return { topoId: '', subId: '' }
-  return cat.parent_id ? { topoId: cat.parent_id, subId: cat.id } : { topoId: cat.id, subId: '' }
-}
-
 export function nomeCompletoCategoria(categorias, categoriaId) {
   const cat = categorias.find((c) => c.id === categoriaId)
   if (!cat) return null

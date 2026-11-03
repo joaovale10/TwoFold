@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import CategoriaSeletor from '../components/CategoriaSeletor'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { dataLocalISO } from '../lib/datas'
 import PlanoOrcamento from '../components/PlanoOrcamento.jsx'
 
 const TIPO_POR_ROTA = { mensais: 'mensal', anuais: 'anual' }
@@ -30,7 +31,7 @@ export default function BudgetsPage() {
 
     const inicio =
       tipo === 'mensal'
-        ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
+        ? dataLocalISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
         : `${new Date().getFullYear()}-01-01`
 
     const { data: txs } = await supabase

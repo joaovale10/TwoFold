@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import CategoriaSeletor from './CategoriaSeletor'
+import { dataLocalISO } from '../lib/datas'
 
 export default function TransactionForm({
   accounts,
@@ -16,7 +17,7 @@ export default function TransactionForm({
   const [valor, setValor] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
   const [contaDestinoId, setContaDestinoId] = useState('')
-  const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
+  const [data, setData] = useState(() => dataLocalISO())
   const [descricao, setDescricao] = useState('')
   const [etiqueta, setEtiqueta] = useState('')
   const [etiquetasExistentes, setEtiquetasExistentes] = useState([])
@@ -96,7 +97,7 @@ export default function TransactionForm({
     setDescricao('')
     setCategoriaId('')
     setContaDestinoId('')
-    setData(new Date().toISOString().slice(0, 10))
+    setData(dataLocalISO())
     setEtiqueta('')
     setSucesso(true)
     setTimeout(() => setSucesso(false), 2500)
@@ -108,7 +109,7 @@ export default function TransactionForm({
     setDescricao('')
     setCategoriaId('')
     setContaDestinoId('')
-    setData(new Date().toISOString().slice(0, 10))
+    setData(dataLocalISO())
     setEtiqueta('')
     setErro(null)
   }

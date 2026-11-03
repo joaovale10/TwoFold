@@ -15,11 +15,12 @@ export default function Login() {
 
   if (session) return <Navigate to="/" replace />
 
-  async function resolverEmail(identificadorOuEmail) {
-    const valor = identificadorOuEmail.trim()
-    if (valor.includes('@')) return valor
-    const { data } = await supabase.rpc('email_de_username', { p_username: valor })
-    return data ?? null
+  async function entrarComUsername(username) {
+    const { data, error } = await supabase.functions.invoke('autenticar-username', {
+      body: { acao: 'entrar', username, password },
+    })
+    if (error) return { message: 'Credenciais inválidas.' }
+    return (await supabase.auth.setSession(data)).error
   }
 
   async function submeter(e) {
@@ -27,14 +28,10 @@ export default function Login() {
     setErro(null)
     setAEnviar(true)
 
-    const email = await resolverEmail(identificador)
-    if (!email) {
-      setAEnviar(false)
-      setErro('Credenciais inválidas.')
-      return
-    }
-
-    const { error } = await signInWithPassword(email, password)
+    const valor = identificador.trim()
+    const error = valor.includes('@')
+      ? (await signInWithPassword(valor, password)).error
+      : await entrarComUsername(valor)
 
     setAEnviar(false)
     if (error) setErro(error.message)
@@ -45,17 +42,13 @@ export default function Login() {
     setErro(null)
     setAEnviar(true)
 
-    const email = await resolverEmail(emailRecuperacao)
-    if (!email) {
-      setAEnviar(false)
-      setErro('Não encontrámos essa conta.')
-      return
-    }
-
-    const { error } = await resetPasswordForEmail(
-      email,
-      `${window.location.origin}/redefinir-password`
-    )
+    const valor = emailRecuperacao.trim()
+    const redirectTo = `${window.location.origin}/redefinir-password`
+    const { error } = valor.includes('@')
+      ? await resetPasswordForEmail(valor, redirectTo)
+      : await supabase.functions.invoke('autenticar-username', {
+          body: { acao: 'recuperar', username: valor, redirectTo },
+        })
 
     setAEnviar(false)
     if (error) {
