@@ -1,5 +1,5 @@
 const PREFIXO = 'icone-conta-'
-export const ICONE_OMISSAO = '🏦'
+const ICONE_OMISSAO = '🏦'
 
 export const ICONES_DISPONIVEIS = ['🏦', '💳', '💶', '🐷', '✈️', '🏠', '🎯', '📈', '💰', '🧾']
 

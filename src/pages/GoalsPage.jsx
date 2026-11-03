@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { saldoDaConta } from '../lib/saldo.js'
+import { dataLocalISO } from '../lib/datas.js'
 
 function chaveDoMes(dataISO) {
   return dataISO.slice(0, 7) // 'YYYY-MM'
@@ -53,7 +54,7 @@ export default function GoalsPage() {
     const hoje = new Date()
     const meses = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
-      return chaveDoMes(d.toISOString())
+      return chaveDoMes(dataLocalISO(d))
     })
 
     const variacaoPorMes = Object.fromEntries(meses.map((m) => [m, 0]))

@@ -17,9 +17,9 @@ create table households (
 
 create table household_members (
   household_id uuid not null references households (id) on delete cascade,
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null unique references auth.users (id) on delete cascade, -- cada utilizador só pertence a um household
   nome text, -- nome próprio a mostrar na UI (ex: "Vale", "Clara")
-  username text unique, -- opcional, para entrar sem escrever o email (ver email_de_username)
+  username text unique, -- opcional, para entrar sem escrever o email (ver supabase/functions/autenticar-username)
   created_at timestamptz not null default now(),
   primary key (household_id, user_id)
 );
@@ -37,24 +37,6 @@ as $$
       and user_id = auth.uid()
   );
 $$;
-
--- Resolve um username para o email da conta, para se poder entrar em
--- /login com username em vez de email. security definer porque auth.users
--- não é legível diretamente, e chamada por quem ainda não está autenticado.
-create or replace function email_de_username(p_username text)
-returns text
-language sql
-security definer
-set search_path = public
-as $$
-  select u.email
-  from household_members hm
-  join auth.users u on u.id = hm.user_id
-  where hm.username = p_username
-  limit 1;
-$$;
-
-grant execute on function email_de_username(text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Accounts: contas casal (partilhadas) e contas pessoais (privadas do dono).
@@ -194,6 +176,10 @@ create table fixed_expenses (
   ativa boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- Liga cada transação gerada à despesa fixa de origem: a BD garante uma só por data.
+alter table transactions add column fixed_expense_id uuid references fixed_expenses (id) on delete set null;
+alter table transactions add constraint transactions_fixed_expense_data_key unique (fixed_expense_id, data);
 
 -- ---------------------------------------------------------------------------
 -- Convites: cada convite está ligado a UM email específico e só pode ser
@@ -438,8 +424,16 @@ begin
     raise exception 'Convite expirado';
   end if;
 
-  if v_invite.email <> auth.jwt() ->> 'email' then
+  if v_invite.email is distinct from auth.jwt() ->> 'email' then
     raise exception 'Este convite não é para este email';
+  end if;
+
+  if exists (select 1 from household_members where user_id = auth.uid()) then
+    raise exception 'Esta conta já pertence a um espaço';
+  end if;
+
+  if (select count(*) from household_members where household_id = v_invite.household_id) >= 2 then
+    raise exception 'Este espaço já tem 2 membros';
   end if;
 
   insert into household_members (household_id, user_id, nome) values (v_invite.household_id, auth.uid(), p_nome);
@@ -484,6 +478,17 @@ grant execute on function admin_criar_espaco(text, text) to authenticated;
 grant execute on function convidar_parceiro(text) to authenticated;
 grant execute on function resgatar_convite(text, text) to authenticated;
 grant execute on function admin_estado_convites() to authenticated;
+
+-- Sem sessão só se pode chamar estado_convite (a página de convite precisa dela e exige o código).
+revoke execute on function admin_criar_espaco(text, text) from public, anon;
+revoke execute on function admin_estado_convites() from public, anon;
+revoke execute on function apagar_categoria(uuid) from public, anon;
+revoke execute on function can_access_account(uuid) from public, anon;
+revoke execute on function convidar_parceiro(text) from public, anon;
+revoke execute on function is_admin() from public, anon;
+revoke execute on function is_household_member(uuid) from public, anon;
+revoke execute on function resgatar_convite(text, text) from public, anon;
+revoke execute on function clonar_categorias_predefinidas(uuid) from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security
