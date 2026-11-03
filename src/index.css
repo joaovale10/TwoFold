@@ -543,9 +543,13 @@ select {
   touch-action: manipulation;
 }
 
+.barra-nav__item:hover,
+.barra-nav__item[aria-current='page'] {
+  opacity: 1;
+}
+
 .barra-nav__item[aria-current='page'] {
   font-weight: 600;
-  opacity: 1;
 }
 
 .barra-nav__item:focus-visible {
@@ -618,6 +622,11 @@ select {
   cursor: pointer;
 }
 
+.menu-perfil a:hover,
+.menu-perfil button:hover {
+  color: var(--accent);
+}
+
 .seletor-orcamento {
   display: flex;
   gap: 0.25rem;
@@ -639,6 +648,10 @@ select {
   text-decoration: none;
 }
 
+.seletor-orcamento a:hover {
+  color: var(--accent);
+}
+
 .seletor-orcamento a.ativo {
   background: var(--panel-dark-accent);
   color: var(--panel-dark-text);
@@ -652,6 +665,11 @@ select {
 }
 
 @media (max-width: 720px) {
+  /* Impede que a barra fixa tape o elemento com foco ao navegar por teclado. */
+  html {
+    scroll-padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .so-desktop,
   .sidebar {
     display: none !important;
